@@ -1,0 +1,6 @@
+osr
+configparser
+psycopg2
+rasterio
+rasterstats
+rios_preprocessor
