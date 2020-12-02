@@ -140,16 +140,23 @@ def cutRaster(catchment,path,out_path):
 		shapes = [feature["geometry"] for feature in shapefile]
 	
 	with rasterio.open(path) as src:
-		out_image, out_transform = mask(src, shapes, crop=True,nodata=-9999)
+		if 'Stream' in path or 'Soil_Depth' in path:
+			nd = 255
+		else:
+			nd = -999
+
+		out_image, out_transform = mask(src, shapes, crop=True,nodata=nd)
 		out_meta = src.meta
 
         print(path)
 
         out_meta.update({"driver": "GTiff",
-                    "height": out_image.shape[1],
-                    "width": out_image.shape[2],
-                    "transform": out_transform,
-                    "nodata":-9999})
+                        "height": out_image.shape[1],
+                        "width": out_image.shape[2],
+                        "transform": out_transform,
+                        "nodata":nd})
+
+
 
         # if "RainfallDay" not in path:
         #     out_meta.update({"driver": "GTiff",
@@ -375,4 +382,4 @@ inputs = {"do_erosion":True,"do_nutrient_p":True,"do_nutrient_n":True,"do_flood"
 # parameters,out_path = processParameters(listP,26,catchment,"/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/",inputs)
 # print(out_path)
 # print(parameters)
-executeFunction(44,[3],5,inputs)
+executeFunction(44,[3],1,inputs)
