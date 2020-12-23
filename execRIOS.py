@@ -1,4 +1,4 @@
-# Date: 27/10/2020
+# Date: 14/12/2020
 # Author: Diego Rodriguez - Skaphe Tecnologia SAS
 # WFApp
 
@@ -105,7 +105,7 @@ def getParameters(basin,model):
 	result = ''
 	listResult = []
 	cursor = connect('postgresql_alfa').cursor()
-	cursor.callproc('wfa.getparametersmodel',[basin,model])
+	cursor.callproc('getparametersmodel',[basin,model])
 	result = cursor.fetchall()
 	for row in result:
 		listResult.append(row)
@@ -127,7 +127,7 @@ def getRegionFromId(basin):
 def getConstantFromBasin(basin,constantName):
 	result = ''
 	cursor = connect('postgresql_alfa').cursor()
-	cursor.callproc('wfa.getconstant',[basin,constantName])
+	cursor.callproc('getconstant',[basin,constantName])
 	result = cursor.fetchall()
 	for row in result:
 		result = row
@@ -186,8 +186,31 @@ def cutRaster(catchment,path,out_path):
 
 	return os.path.join(out_path,os.path.basename(path))
 
+def getActivities(user_id):
+    result = ''
+    listResult = []
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('getactivities',[user_id])
+    result = cursor.fetchall()
+    for row in result:
+        listResult.append(row)
+    cursor.close()
+    return listResult
+
+def getTransitions():
+    result = ''
+    listResult = []
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('gettransitions',[])
+    result = cursor.fetchall()
+    for row in result:
+        listResult.append(row)
+    cursor.close()
+    return listResult
+
+
 # Procesar parametros
-def processParameters(parametersList, basin, catchment,pathF, inputs,user):
+def processParameters(parametersList, basin, catchment,pathF, user):
     dictParameters = dict()
     out_path = ""
     in_path = ""
@@ -195,6 +218,8 @@ def processParameters(parametersList, basin, catchment,pathF, inputs,user):
     out_path = os.path.join(os.getcwd(),pathF,'out',out_folder)
     in_path = os.path.join(os.getcwd(),pathF,'in',out_folder)
 	
+    measurement_value = 10000
+    measurement_unit = "area"
 
     isdir = os.path.isdir(out_path)
     if(not isdir):
@@ -221,36 +246,68 @@ def processParameters(parametersList, basin, catchment,pathF, inputs,user):
         calculado = parameter[11]
         inputUser = parameter[12]
         bio_param = parameter[13]
-        if(suffix):
-            region = getRegionFromId(basin)
-            label = region[4]
-            value = label
-        if(constant):
-            constantValue = getConstantFromBasin(basin,name)
-            value = constantValue[2]
-        if(empty):
-            value = ''
-        if(cut):
-            value = cutRaster(catchment,value,in_path)
-        if(file):
-            value = catchment
-        if(outPathType):
-            value = out_path
-        if(calculado):
-            region = getRegionFromId(basin)
-            label = region[4]
-            maxMonth,outRaster = calculateRainfallDayMonth(value,catchment,label)
-            value = cutRaster(catchment,outRaster,in_path)
-        if(inputUser):
-            value = inputs[name]
-        if(bio_param):
-			region = getRegionFromId(basin)
-			label = region[4]
-			file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
-			values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
-			generateCsv(headers,values,file)
-			value = file
-        dictParameters[name] = value
+        preproc = parameter[14]
+        riosType = parameter[15]
+
+        # print(riosType)
+        if(riosType):
+            # print(riosType)
+            if(riosType == 'activities'):
+                dictParameters[name] = {}
+                listAct = getActivities(user)
+                for la in listAct:
+                    dictParameters[name][la[0]] = {}
+                    dictParameters[name][la[0]]["measurement_unit"] = measurement_unit
+                    dictParameters[name][la[0]]["measurement_value"] = measurement_value
+                    dictParameters[name][la[0]]["unit_cost"] = float(la[1] + la[2])
+            elif(riosType == 'transition_default'):
+                dictParameters[name] = []
+                listTrans = getTransitions()
+                for lt in listTrans:
+                    dictTran = {
+                        "file_name": lt[1],
+                        "transition_type": lt[2],
+                        "id": lt[3],
+                        "label": lt[4]
+                    }
+                    dictParameters[name].append(dictTran)
+
+                
+
+
+
+
+
+        # if(suffix):
+        #     region = getRegionFromId(basin)
+        #     label = region[4]
+        #     value = label
+        # if(constant):
+        #     constantValue = getConstantFromBasin(basin,name)
+        #     value = constantValue[2]
+        # if(empty):
+        #     value = ''
+        # if(cut):
+        #     value = cutRaster(catchment,value,in_path)
+        # if(file):
+        #     value = catchment
+        # if(outPathType):
+        #     value = out_path
+        # if(calculado):
+        #     region = getRegionFromId(basin)
+        #     label = region[4]
+        #     maxMonth,outRaster = calculateRainfallDayMonth(value,catchment,label)
+        #     value = cutRaster(catchment,outRaster,in_path)
+        # if(inputUser):
+        #     value = inputs[name]
+        # if(bio_param):
+		# 	region = getRegionFromId(basin)
+		# 	label = region[4]
+		# 	file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
+		# 	values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
+		# 	generateCsv(headers,values,file)
+		# 	value = file
+        # dictParameters[name] = value
         # print(parameter)
 
 
@@ -392,3 +449,12 @@ def executeFunction(basin,id_catchment,id_usuario,inputs):
 # # print(out_path)
 # # print(parameters)
 # executeFunction(44,[3],1,inputs)
+
+listP = getParameters(44,'rios')
+catchment = exportToShp([3], "/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/")
+parameters,out_path = processParameters(listP,44,catchment,"/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/",1000)
+
+print(parameters)
+# for l in listP:
+#     print(l)
+# print(listP)
