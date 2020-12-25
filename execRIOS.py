@@ -315,6 +315,21 @@ def processParameters(parametersList, basin, pathF, user):
                 outShp = exportToShpActivities(in_path, user)
                 listAct.append(outShp)           
                 value = listAct  
+
+            elif(riosType == 'transition_map'):
+                dictParameters[name] = {}
+                transitionsList = getTransitions()
+                for transition in transitionsList:
+                    dictParameters[name][transition[1]] = {}
+                    listActivities = getActivities(user)
+                    for activity in listActivities:
+                        dictParameters[name][transition[1]][remove_accents(activity[0])] = 0
+                value = dictParameters[name]
+                # listAct = []
+                # listPolygons = getActivityShapefile(user)
+                # outShp = exportToShpActivities(in_path, user)
+                # listAct.append(outShp)           
+                # value = listAct  
         
         if(outPathType):
             value = out_path
