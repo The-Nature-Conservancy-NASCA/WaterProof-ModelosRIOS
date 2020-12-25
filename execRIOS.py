@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+
 # Date: 14/12/2020
 # Author: Diego Rodriguez - Skaphe Tecnologia SAS
 # WFApp
@@ -11,17 +15,19 @@ from config import config
 from connect import connect
 sys.path.append(os.path.split(os.getcwd())[0] + os.path.sep + 'RIOS_Toolbox')
 import RIOS_Toolbox.rios_preprocessor as Pro
+import re
 
-# Exportar cuenca delimitada a shp
-def exportToShp(catchment, path):
-	params = config(section='postgresql')
+# Exportar poligonos de actividades a shapefile
+def exportToShpActivities(path, user):
+	params = config(section='postgresql_alfa')
 	connString = "PG: host=" + params['host'] + " dbname=" + params['database'] + " user=" + params['user'] + " password=" + params['password'] 
 	conn=ogr.Open(connString)
 	if conn is None:
 		print('Could not open a database or GDAL is not correctly installed!')
 		sys.exit(1)
 
-	output = os.path.join(path,"in","catchment","catchment.shp")
+	output = os.path.join(path,"activities_shp")
+	print(output)
 	source = osr.SpatialReference()
 	source.ImportFromEPSG(4326)
 	target = osr.SpatialReference()
@@ -30,46 +36,57 @@ def exportToShp(catchment, path):
 
 	# Schema definition of SHP file
 	out_driver = ogr.GetDriverByName( 'ESRI Shapefile' )
+	if os.path.exists(output):
+		out_driver.DeleteDataSource(output)
+
 	out_ds = out_driver.CreateDataSource(output)
 
-	out_layer = out_ds.CreateLayer("catchment", target, ogr.wkbPolygon)
-	fd = ogr.FieldDefn('ws_id',ogr.OFTInteger)
-	fd1 = ogr.FieldDefn('subws_id',ogr.OFTInteger)
-	out_layer.CreateField(fd)
-	out_layer.CreateField(fd1)
-	if(len(catchment) == 1):
-		params = ' = ' + str(catchment[0]) 
-	elif(len(catchment) > 1):
-		params = ' IN ('
-		for c in catchment:
-			params = params + str(c) + ','
-		params = params[:-1] + ')'
+	
+
+	out_layer = out_ds.CreateLayer("activities", target, ogr.wkbMultiPolygon)
+	fd_activity = ogr.FieldDefn('activity_n',ogr.OFTString)
+	fd_action = ogr.FieldDefn('action',ogr.OFTString)
+	out_layer.CreateField(fd_activity)
+	out_layer.CreateField(fd_action)
+	# if(len(catchment) == 1):
+	# 	params = ' = ' + str(catchment[0]) 
+	# elif(len(catchment) > 1):
+	# 	params = ' IN ('
+	# 	for c in catchment:
+	# 		params = params + str(c) + ','
+	# 	params = params[:-1] + ')'
 
 
 
-	if(catchment != -1):
-		sql = "select * from delineated_catchment where id_delineate_catchment" + str(params)
+	# sql = "select getactivityshp(" +  str(user) + ")"
+	sql = ("select shp.id,nbs.name,shp.action,shp.area"
+            " from waterproof_nbs_ca_waterproofnbsca nbs"
+            " join waterproof_nbs_ca_activityshapefile shp on nbs.activity_shapefile_id = shp.id"
+            " where nbs.added_by_id = " +  str(user) + ";")
 
-		# layer = conn.GetLayerByName("delineated_catchment")
-		layer = conn.ExecuteSQL(sql)
-		
+	print(sql)
+
+    # layer = conn.GetLayerByName("delineated_catchment")
+	layer = conn.ExecuteSQL(sql)
+    
+	feat = layer.GetNextFeature()
+	while feat is not None:
+		# print(feat)
+		featDef = ogr.Feature(out_layer.GetLayerDefn())
+		geom = feat.GetGeometryRef()
+		geom.Transform(transform)		
+		featDef.SetGeometry(geom)			
+		featDef.SetField('activity_n',remove_accents(feat.name))		
+		featDef.SetField('action',feat.action)		
+		out_layer.CreateFeature(featDef)
+		feat.Destroy()
 		feat = layer.GetNextFeature()
-		while feat is not None:
-			featDef = ogr.Feature(out_layer.GetLayerDefn())
-			geom = feat.GetGeometryRef()
-			geom.Transform(transform)		
-			featDef.SetGeometry(geom)			
-			featDef.SetField('ws_id',feat.id_delineate_catchment)		
-			featDef.SetField('subws_id',feat.id_delineate_catchment)		
-			out_layer.CreateFeature(featDef)
-			feat.Destroy()
-			feat = layer.GetNextFeature()
-			
+        
 
-		conn.Destroy()
-		out_ds.Destroy()
+	conn.Destroy()
+	out_ds.Destroy()
 		
-	return os.path.join(os.getcwd(),output)
+	return output
 
 def resamplingRaster(templatePath,srcPath,out):
 
@@ -193,6 +210,7 @@ def getActivities(user_id):
     cursor.callproc('getactivities',[user_id])
     result = cursor.fetchall()
     for row in result:
+        # print(row)
         listResult.append(row)
     cursor.close()
     return listResult
@@ -208,9 +226,22 @@ def getTransitions():
     cursor.close()
     return listResult
 
+def getActivityShapefile(user_id):
+    result = ''
+    listResult = []
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('getactivityshp',[user_id])
+    result = cursor.fetchall()
+    for row in result:
+        # print(row)
+        listResult.append(row)
+    cursor.close()
+    return listResult
+
 
 # Procesar parametros
-def processParameters(parametersList, basin, catchment,pathF, user):
+def processParameters(parametersList, basin, pathF, user):
+# def processParameters(parametersList, basin, catchment,pathF, user):
     dictParameters = dict()
     out_path = ""
     in_path = ""
@@ -256,10 +287,13 @@ def processParameters(parametersList, basin, catchment,pathF, user):
                 dictParameters[name] = {}
                 listAct = getActivities(user)
                 for la in listAct:
-                    dictParameters[name][la[0]] = {}
-                    dictParameters[name][la[0]]["measurement_unit"] = measurement_unit
-                    dictParameters[name][la[0]]["measurement_value"] = measurement_value
-                    dictParameters[name][la[0]]["unit_cost"] = float(la[1] + la[2])
+                    dictParameters[name][remove_accents(la[0])] = {}
+                    dictParameters[name][remove_accents(la[0])]["measurement_unit"] = measurement_unit
+                    dictParameters[name][remove_accents(la[0])]["measurement_value"] = measurement_value
+                    dictParameters[name][remove_accents(la[0])]["unit_cost"] = float(la[1] + la[2])
+                    
+                value = dictParameters[name]
+
             elif(riosType == 'transition_default'):
                 dictParameters[name] = []
                 listTrans = getTransitions()
@@ -271,6 +305,33 @@ def processParameters(parametersList, basin, catchment,pathF, user):
                         "label": lt[4]
                     }
                     dictParameters[name].append(dictTran)
+
+                value = dictParameters[name]
+            
+            elif(riosType == 'shp_act'):
+                dictParameters[name] = []
+                listAct = []
+                listPolygons = getActivityShapefile(user)
+                outShp = exportToShpActivities(in_path, user)
+                listAct.append(outShp)           
+                value = listAct  
+        
+        if(outPathType):
+            value = out_path
+
+        if(bio_param):
+            print("bio_param: " + name)
+            region = getRegionFromId(basin)
+            label = region[4]
+            file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
+            values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
+            generateCsv(headers,values,file)
+            value = file
+
+
+        
+        dictParameters[name] = value
+        
 
                 
 
@@ -419,6 +480,20 @@ def executeFunction(basin,id_catchment,id_usuario,inputs):
             do_gw_bf            = parameters["do_gw_bf"], # Objetivo recarga de agua subterranea y flujo base
             river_buffer_dist   = int(parameters["river_buffer_dist"])) # Buffer
 
+
+def remove_accents(string):
+    if type(string) is not unicode:
+        string = unicode(string, encoding='utf-8')
+
+    string = re.sub(u"[àáâãäå]", 'a', string)
+    string = re.sub(u"[èéêë]", 'e', string)
+    string = re.sub(u"[ìíîï]", 'i', string)
+    string = re.sub(u"[òóôõö]", 'o', string)
+    string = re.sub(u"[ùúûü]", 'u', string)
+    string = re.sub(u"[ýÿ]", 'y', string)
+
+    return string
+
 # def executeFunction(basin,model,type,id_catchment,id_usuario):
 # 	date = datetime.date.today()
 # 	path = createFolder(id_usuario,date)
@@ -451,8 +526,9 @@ def executeFunction(basin,id_catchment,id_usuario,inputs):
 # executeFunction(44,[3],1,inputs)
 
 listP = getParameters(44,'rios')
-catchment = exportToShp([3], "/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/")
-parameters,out_path = processParameters(listP,44,catchment,"/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/",1000)
+# catchment = exportToShp([3], "/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/")
+# parameters,out_path = processParameters(listP,44,catchment,"/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/",1000)
+parameters,out_path = processParameters(listP,44,"/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/",1000)
 
 print(parameters)
 # for l in listP:

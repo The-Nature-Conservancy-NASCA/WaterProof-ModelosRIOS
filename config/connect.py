@@ -7,6 +7,7 @@ def connect(tipo):
 	params = config(section=tipo)
 	print('Connecting to the PostgreSQL database...')
 	conn = psycopg2.connect(**params)
+	conn.set_client_encoding('UTF8')
 	return conn
 
 
