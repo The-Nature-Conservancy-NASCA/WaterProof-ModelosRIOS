@@ -367,6 +367,8 @@ def processParameters(parametersList, basin, pathF, user, objectives):
                     # print(list_la)
                     dictParameters[name][lulc] = list_la
 
+                value = dictParameters[name]
+
             elif(riosType == "priorities"):
                 dictParameters[name] = {}
                 transitionsList = getTransitions()
@@ -378,6 +380,22 @@ def processParameters(parametersList, basin, pathF, user, objectives):
 
                 value = dictParameters[name]
                 # print(listCsv)
+
+            elif(riosType == "budget_conf"):
+                dictParameters[name] = {}
+                dictParameters[name]["years_to_spend"] = 1
+                dictParameters[name]["activity_budget"] = {}
+                listAct = getActivities(user)
+                # print(listAct) 
+                for la in listAct:
+                    dictParameters[name]["activity_budget"][remove_accents(la[0])] = {}
+                    dictParameters[name]["activity_budget"][remove_accents(la[0])]["budget_amount"] = 0
+
+                dictParameters[name]["if_left_over"] = "Report remainder"
+                dictParameters[name]["floating_budget"] = 0
+
+                value = dictParameters[name]
+
                 
 
 
