@@ -9,7 +9,7 @@
 import sys, os, rasterio, fiona, ogr, osr, datetime
 from rasterio.mask import mask
 from zonalStatistics import calculateRainfallDayMonth,calculateStatistic
-from createBioParamCsv import getColsParams,generateCsv
+from createBioParamCsv import getColsParams,generateCsv,readCsv
 sys.path.append('config')
 from config import config
 from connect import connect
@@ -238,9 +238,22 @@ def getActivityShapefile(user_id):
     cursor.close()
     return listResult
 
+def getObjectives(ids):
+    listResult = []
+    for id in ids:
+        cursor = connect('postgresql_alfa').cursor()
+        cursor.callproc('getobjectives',[id])
+        result = cursor.fetchall()
+        for row in result:
+            listResult.append(row)
+        cursor.close()
+    
+    return listResult
+
+
 
 # Procesar parametros
-def processParameters(parametersList, basin, pathF, user):
+def processParameters(parametersList, basin, pathF, user, objectives):
 # def processParameters(parametersList, basin, catchment,pathF, user):
     dictParameters = dict()
     out_path = ""
@@ -286,6 +299,7 @@ def processParameters(parametersList, basin, pathF, user):
             if(riosType == 'activities'):
                 dictParameters[name] = {}
                 listAct = getActivities(user)
+                # print(listAct) 
                 for la in listAct:
                     dictParameters[name][remove_accents(la[0])] = {}
                     dictParameters[name][remove_accents(la[0])]["measurement_unit"] = measurement_unit
@@ -325,17 +339,69 @@ def processParameters(parametersList, basin, pathF, user):
                     for activity in listActivities:
                         dictParameters[name][transition[1]][remove_accents(activity[0])] = 0
                 value = dictParameters[name]
-                # listAct = []
-                # listPolygons = getActivityShapefile(user)
-                # outShp = exportToShpActivities(in_path, user)
-                # listAct.append(outShp)           
-                # value = listAct  
+            
+            elif(riosType == 'lulc_act'):
+                key_lulc = "lulc_coefficients_table_uri"
+                dictParameters[name] = {}
+                file = ""
+                listActivities_1 = getActivities(user)
+                
+                if(key_lulc not in dictParameters):
+                    # print("no existe no")
+                    region = getRegionFromId(basin)
+                    label = region[4]
+                    file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
+                    values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
+                    generateCsv(headers,values,file)
+                    value = file
+
+                listCsv = readCsv(file,"lucode")
+                for lulc in listCsv:
+                    dictParameters[name][lulc] = []
+                    list_la = []
+                    # print(listActivities_1)
+                    for act in listActivities_1:     
+                                          
+                        list_la.append(remove_accents(act[0]))
+                
+                    # print(list_la)
+                    dictParameters[name][lulc] = list_la
+
+            elif(riosType == "priorities"):
+                dictParameters[name] = {}
+                transitionsList = getTransitions()
+                for transition in transitionsList:
+                    dictParameters[name][transition[1]] = {}
+                    listObjectives = getObjectives(objectives)
+                    for obj in listObjectives:
+                        dictParameters[name][transition[1]][obj[0]] = 1
+
+                value = dictParameters[name]
+                # print(listCsv)
+                
+
+
+
+                # if(dictParameters["lulc_activity_potential_map"]):
+                #     print("existe")
+                # else:
+                #     print("no existe")
+
+                # dictParameters[name] = {}
+                # transitionsList = getTransitions()
+                # for transition in transitionsList:
+                #     dictParameters[name][transition[1]] = {}
+                #     listActivities = getActivities(user)
+                #     for activity in listActivities:
+                #         dictParameters[name][transition[1]][remove_accents(activity[0])] = 0
+                # value = dictParameters[name]
+                
         
         if(outPathType):
             value = out_path
 
         if(bio_param):
-            print("bio_param: " + name)
+            # print("bio_param: " + name)
             region = getRegionFromId(basin)
             label = region[4]
             file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
@@ -543,7 +609,8 @@ def remove_accents(string):
 listP = getParameters(44,'rios')
 # catchment = exportToShp([3], "/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/")
 # parameters,out_path = processParameters(listP,44,catchment,"/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/",1000)
-parameters,out_path = processParameters(listP,44,"/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/",1000)
+objectives = [2,3,4,5,6,7,8]
+parameters,out_path = processParameters(listP,44,"/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/",1000,objectives)
 
 print(parameters)
 # for l in listP:

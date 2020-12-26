@@ -63,6 +63,26 @@ def generateCsv(header,values, file):
         writer = csv.writer(file)
         writer.writerows(row_list)
 
+def readCsv(file,field):
+
+    with open(file) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        index = 0
+        resultList = []
+        for row in csv_reader:
+            if line_count == 0:
+                # print("Name: " + row)
+                if field in row:
+                    index = row.index(field)
+                line_count += 1
+            else:
+                # print("Value: " + row)
+                resultList.append(row[index])
+                line_count += 1
+
+    return resultList
+
 
 
 
