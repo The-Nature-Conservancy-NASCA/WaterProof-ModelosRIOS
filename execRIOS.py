@@ -226,6 +226,17 @@ def getTransitions():
     cursor.close()
     return listResult
 
+def getParametersByObj(id_obj, id_basin):
+    result = ''
+    listResult = []
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('getparametersbyobj',[id_basin,id_obj])
+    result = cursor.fetchall()
+    for row in result:
+        listResult.append(row)
+    cursor.close()
+    return listResult
+
 def getActivityShapefile(user_id):
     result = ''
     listResult = []
@@ -395,6 +406,33 @@ def processParameters(parametersList, basin, pathF, user, objectives):
                 dictParameters[name]["floating_budget"] = 0
 
                 value = dictParameters[name]
+
+            elif(riosType == "objectives"):
+                dictParameters[name] = {}
+                listObjectives = getObjectives(objectives)
+                for obj in listObjectives:
+                    dictParameters[name][obj[0]] = {}
+                    dictParameters[name][obj[0]]["rios_model_type"] = "rios_tier_0"
+                    dictParameters[name][obj[0]]["priorities"] = {}
+                    transitionsList = getTransitions()
+                    listParametersObj = getParametersByObj(obj[1], basin)
+                    for transition in transitionsList:
+                        dictParameters[name][obj[0]]["priorities"][transition[1]] = {}
+                        for param in listParametersObj:
+                            dictParameters[name][obj[0]]["priorities"][transition[1]][param[0]] = 0
+
+                    dictParameters[name][obj[0]]["factors"] = {}
+
+                    for param in listParametersObj:
+                        dictParameters[name][obj[0]]["factors"][param[0]] = {}
+                        dictParameters[name][obj[0]]["factors"][param[0]]["raster_uri"] = param[2]
+                        dictParameters[name][obj[0]]["factors"][param[0]]["bins"] = {}
+                        dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["inverted"] = False
+                        dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["type"] = "interpolated"
+                        dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["interpolation"] = "linear"
+
+                value = dictParameters[name]
+
 
                 
 
