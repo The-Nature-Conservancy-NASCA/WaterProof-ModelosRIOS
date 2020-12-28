@@ -1,0 +1,7 @@
+name: RIOS
+dependencies:
+  - python=2.7
+  - conda-forge::gdal=2.4.4
+  - conda-forge::rtree=0.9.4
+  - conda-forge::libtiff
+  - anaconda::scipy

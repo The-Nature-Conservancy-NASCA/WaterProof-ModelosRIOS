@@ -1,8 +1,13 @@
 from flask import Flask
 from exec_preproc import executeFunction
 from flask import request
+import logging
 
 app = Flask(__name__)
+
+logger = logging.getLogger('werkzeug') # grabs underlying WSGI logger
+handler = logging.FileHandler('test.log') # creates handler for the log file
+logger.addHandler(handler) # adds handler to the werkzeug WSGI logger
 
 @app.route('/welcome/', methods=['GET'])
 def welcome():
