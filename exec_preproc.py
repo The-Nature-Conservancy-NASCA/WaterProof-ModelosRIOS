@@ -301,7 +301,8 @@ def processParameters(parametersList, basin, catchment,pathF, inputs,user):
 
 def executeFunction(basin,id_catchment,id_usuario,inputs):
     date = datetime.date.today()
-    path = os.path.join("/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp",str(id_usuario) +  "_" + str(date.year) + "_" + str(date.month) + "_" + str(date.day))
+    # path = os.path.join("/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp",str(id_usuario) +  "_" + str(date.year) + "_" + str(date.month) + "_" + str(date.day))
+    path = os.path.join("/data/wpdev/salidas",str(id_usuario) +  "_" + str(date.year) + "_" + str(date.month) + "_" + str(date.day))
     pathPreprocIn = os.path.join(path,"in","02-PREPROC_RIOS")
     pathPreprocOut = os.path.join(path,"out","02-PREPROC_RIOS")
     pathCatchment = os.path.join(path,"in","catchment")
