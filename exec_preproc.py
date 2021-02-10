@@ -15,7 +15,7 @@ import RIOS_Toolbox.rios_preprocessor as Pro
 ruta = os.environ["PATH_FILES"]
 # Exportar cuenca delimitada a shp
 def exportToShp(catchment, path):
-	params = config(section='postgresql')
+	params = config(section='postgresql_alfa')
 	connString = "PG: host=" + params['host'] + " dbname=" + params['database'] + " user=" + params['user'] + " password=" + params['password'] 
 	conn=ogr.Open(connString)
 	if conn is None:
@@ -49,26 +49,33 @@ def exportToShp(catchment, path):
 
 
 	if(catchment != -1):
-		sql = "select * from delineated_catchment where id_delineate_catchment" + str(params)
+		sql = "select * from waterproof_intake_polygon where delimitation_type = 'sbn' and intake_id" + str(params)
 
 		# layer = conn.GetLayerByName("delineated_catchment")
 		layer = conn.ExecuteSQL(sql)
+        
+        count = layer.GetFeatureCount()
+
+        if(count == 0):
+            sql = "select * from waterproof_intake_polygon where delimitation_type = 'catchment' and intake_id" + str(params)
+            layer = conn.ExecuteSQL(sql)
 		
-		feat = layer.GetNextFeature()
-		while feat is not None:
-			featDef = ogr.Feature(out_layer.GetLayerDefn())
-			geom = feat.GetGeometryRef()
-			geom.Transform(transform)		
-			featDef.SetGeometry(geom)			
-			featDef.SetField('ws_id',feat.id_delineate_catchment)		
-			featDef.SetField('subws_id',feat.id_delineate_catchment)		
-			out_layer.CreateFeature(featDef)
-			feat.Destroy()
-			feat = layer.GetNextFeature()
+        feat = layer.GetNextFeature()
+
+        while feat is not None:
+            featDef = ogr.Feature(out_layer.GetLayerDefn())
+            geom = feat.GetGeometryRef()
+            geom.Transform(transform)		
+            featDef.SetGeometry(geom)			
+            featDef.SetField('ws_id',feat.id)		
+            featDef.SetField('subws_id',feat.id)		
+            out_layer.CreateFeature(featDef)
+            feat.Destroy()
+            feat = layer.GetNextFeature()
 			
 
-		conn.Destroy()
-		out_ds.Destroy()
+        conn.Destroy()
+        out_ds.Destroy()
 		
 	return os.path.join(os.getcwd(),output)
 
@@ -106,7 +113,7 @@ def getParameters(basin,model):
 	result = ''
 	listResult = []
 	cursor = connect('postgresql_alfa').cursor()
-	cursor.callproc('wfa.getparametersmodel',[basin,model])
+	cursor.callproc('getparametersmodel',[basin,model])
 	result = cursor.fetchall()
 	for row in result:
 		listResult.append(row)
@@ -116,7 +123,7 @@ def getParameters(basin,model):
 # Recuperar macroregion por id
 def getRegionFromId(basin):
 	result = ''
-	cursor = connect('postgresql').cursor()
+	cursor = connect('postgresql_alfa').cursor()
 	cursor.callproc('getBasin',[basin])
 	result = cursor.fetchall()
 	for row in result:
@@ -128,7 +135,7 @@ def getRegionFromId(basin):
 def getConstantFromBasin(basin,constantName):
 	result = ''
 	cursor = connect('postgresql_alfa').cursor()
-	cursor.callproc('wfa.getconstant',[basin,constantName])
+	cursor.callproc('getconstant',[basin,constantName])
 	result = cursor.fetchall()
 	for row in result:
 		result = row
@@ -205,6 +212,8 @@ def processParameters(parametersList, basin, catchment,pathF, inputs,user):
     if(not isdir):
         os.mkdir(in_path)
 
+    # print(parametersList)
+
     for parameter in parametersList:
         name = parameter[0]
         value = parameter[1]
@@ -222,6 +231,7 @@ def processParameters(parametersList, basin, catchment,pathF, inputs,user):
         calculado = parameter[11]
         inputUser = parameter[12]
         bio_param = parameter[13]
+        
         if(suffix):
             region = getRegionFromId(basin)
             label = region[4]

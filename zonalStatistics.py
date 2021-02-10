@@ -8,19 +8,19 @@ def calculateStatistic(types,raster,catchment):
  
 def calculateRainfallDayMonth(folder,catchment,label):
 	months = dict()
-	months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DEC']
+	months = ['JAN_1','FEB_2','MAR_3','APR_4','MAY_5','JUN_6','JUL_7','AGO_8','SEP_9','OCT_10','NOV_11','DEC_12']
 	typeStat = ['mean']
 	monthsPrecipitation = {}
 
 
 	for month in months:
-		pathRaster = os.path.join(folder,'RainfallDay_' + month + "_" + label + ".tif")
+		pathRaster = os.path.join(folder,'Pcp_' + label + "_" + month + ".tif")
 		zs = calculateStatistic(typeStat,pathRaster,catchment)
 		monthsPrecipitation[month] = zs[0]['mean']
 
 	maxMonth = max(monthsPrecipitation.iteritems(), key=operator.itemgetter(1))[0]
 
-	out_path_month = os.path.join(folder,'RainfallDay_' + maxMonth + "_" + label + ".tif")
+	out_path_month = os.path.join(folder,'Pcp_' + label + "_" + maxMonth + ".tif")
 
 	return maxMonth,out_path_month
  

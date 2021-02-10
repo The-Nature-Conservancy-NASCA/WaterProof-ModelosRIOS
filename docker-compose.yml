@@ -9,14 +9,14 @@ services:
       - PG_HOST=dev.skaphe.com
       - PG_GEO_DATABASE=geonode_data
       - PG_GEO_USER=postgres
-      - PG_GEO_PASSWORD=skaphe2O2O
+      - PG_GEO_PASSWORD=bYMk&M{6E]9s?g"*[Q^;I^m4@x5qkO
       - PG_DATABASE=geonode
       - PG_USER=postgres
-      - PG_PASSWORD=skaphe2O2O
+      - PG_PASSWORD=bYMk&M{6E]9s?g"*[Q^;I^m4@x5qkO
       - PG_PORT=5432
       - PATH_FILES=/home/skaphe/Documentos/tnc/modelos
     volumes:
-      - /data/global_datasets:/home/skaphe/Documentos/tnc/modelos/entradas
-      - /data/salidas:/home/skaphe/Documentos/tnc/modelos/salidas
+      - /home/skaphe/Documentos/tnc/modelos/entradas:/home/skaphe/Documentos/tnc/modelos/entradas
+      - /home/skaphe/Documentos/tnc/modelos/salidas:/home/skaphe/Documentos/tnc/modelos/salidas
     ports:
       - 5050:5050
