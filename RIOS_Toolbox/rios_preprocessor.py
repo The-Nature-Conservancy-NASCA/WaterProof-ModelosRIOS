@@ -1743,11 +1743,11 @@ def process_flood_mitigation(intermediate_files, output_files,
                                 lulc_coeff_df, rios_fields["cover"],
                                 flood_index_cover)
     
-    print(lulc_coeff_df['file'][1])
+    # print(lulc_coeff_df['file'])
     indexD['LULC cover'] = {
             'index': flood_index_cover,
             'source': {"LULC": {"file": lulc_raster_uri}},
-            'factor': {'LULC table': {"file": lulc_coeff_df['file'][1]},
+            'factor': {'LULC table': {"file": lulc_coeff_df['file']},
                       'LULC factor': rios_fields["cover"]}}
 
     if not os.path.exists(flood_index_rough):
@@ -1757,7 +1757,7 @@ def process_flood_mitigation(intermediate_files, output_files,
     indexD['LULC rough'] = {
             'index': flood_index_rough,
             'source': {"LULC": {"file": lulc_raster_uri}},
-            'factor': {'LULC table': {"file": lulc_coeff_df['file'][1]},
+            'factor': {'LULC table': {"file": lulc_coeff_df['file']},
                        'LULC factor': rios_fields["roughness"]}}
 
     # Make other index rasters as necessary
@@ -2403,6 +2403,8 @@ def main(working_path, output_path, hydro_path, rios_coeff_table,
                                  "factor": {"normalisation": factor}}
         made_slope_index = True
 
+    # print("file lulc " + str(lulc_coeff_df['file'][1]))
+
 
 ###############################################################################
     # Process Flood Mitigation objective
@@ -2410,7 +2412,7 @@ def main(working_path, output_path, hydro_path, rios_coeff_table,
         this_obj = "Flood Mitigation"
         intermediate_files = objective[this_obj]["intermediate"]
         output_files = objective[this_obj]["output"]
-        print(intermediate_files)
+        
 
         process_flood_mitigation(intermediate_files, output_files,
                                  working_path, output_path,

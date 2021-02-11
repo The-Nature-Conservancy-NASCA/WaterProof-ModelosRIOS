@@ -15,6 +15,7 @@ from config import config
 from connect import connect
 sys.path.append(os.path.split(os.getcwd())[0] + os.path.sep + 'RIOS_Toolbox')
 import RIOS_Toolbox.rios_preprocessor as Pro
+import RIOS_Toolbox.rios as rios
 import re
 
 # Exportar poligonos de actividades a shapefile
@@ -424,12 +425,34 @@ def processParameters(parametersList, basin, pathF, user, objectives):
                     dictParameters[name][obj[0]]["factors"] = {}
 
                     for param in listParametersObj:
-                        dictParameters[name][obj[0]]["factors"][param[0]] = {}
-                        dictParameters[name][obj[0]]["factors"][param[0]]["raster_uri"] = param[2]
-                        dictParameters[name][obj[0]]["factors"][param[0]]["bins"] = {}
-                        dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["inverted"] = False
-                        dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["type"] = "interpolated"
-                        dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["interpolation"] = "linear"
+                        if(param[0] == 'Vegetative Cover Index' or param[0] == 'Land Use Land Cover Retention at pixel' 
+                        or param[0] == 'On-pixel retention' or param[0] == 'On-pixel source'):
+                            ranks = {
+                                'Vegetative Cover Index': 'Cover_Rank',
+                                'Land Use Land Cover Retention at pixel':'Rough_Rank',
+                                'On-pixel retention':'Sed_Ret',
+                                'On-pixel source': 'Sed_Exp'
+                            }
+                            region = getRegionFromId(basin)
+                            label = region[4]
+                            file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
+                            values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
+                            generateCsv(headers,values,file)
+                            # value = file
+                            dictParameters[name][obj[0]]["factors"][param[0]] = {}
+                            dictParameters[name][obj[0]]["factors"][param[0]]["bins"] = {}
+                            dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["key_field"] = 'lulc_general'
+                            dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["raster_uri"] = param[2]
+                            dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["uri"] = file
+                            dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["value_field"] = ranks[param[0]]
+                        else:
+                            dictParameters[name][obj[0]]["factors"][param[0]] = {}
+                            dictParameters[name][obj[0]]["factors"][param[0]]["raster_uri"] = param[2]
+                            dictParameters[name][obj[0]]["factors"][param[0]]["bins"] = {}
+                            dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["inverted"] = False
+                            dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["type"] = "interpolated"
+                            dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["interpolation"] = "linear"
+
 
                 value = dictParameters[name]
 
@@ -631,6 +654,13 @@ def remove_accents(string):
 
     return string
 
+def execModel(args):
+    print(args)
+    rios.execute(args)
+
+
+
+
 # def executeFunction(basin,model,type,id_catchment,id_usuario):
 # 	date = datetime.date.today()
 # 	path = createFolder(id_usuario,date)
@@ -666,9 +696,11 @@ listP = getParameters(44,'rios')
 # catchment = exportToShp([3], "/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/")
 # parameters,out_path = processParameters(listP,44,catchment,"/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/",1000)
 objectives = [2,3,4,5,6,7,8]
-parameters,out_path = processParameters(listP,44,"/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/",1000,objectives)
-
+parameters,out_path = processParameters(listP,44,"/home/skaphe/Documentos/tnc/modelos/salidas/9_2020_10_24/",1000,objectives)
 print(parameters)
+execModel(parameters)
+
+
 # for l in listP:
 #     print(l)
 # print(listP)
