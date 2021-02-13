@@ -18,6 +18,17 @@ import RIOS_Toolbox.rios_preprocessor as Pro
 import RIOS_Toolbox.rios as rios
 import re
 
+# Correspondencia/homologacion entre objetivos de rios_preprocessor y rios
+objectives_mapping = {
+    'erosion_drinking_control': 'do_erosion',
+    'erosion_reservoir_control': 'do_erosion',
+    'nutrient_retention_nitrogen': 'do_nutrient_n',
+    'nutrient_retention_phosporus': 'do_nutrient_p',
+    'flood_mitigation_impact': 'do_flood',
+    'groundwater_recharge': 'do_gw_bf',
+    'baseflow': 'do_gw_bf'
+}
+
 # Exportar poligonos de actividades a shapefile
 def exportToShpActivities(path, user):
 	params = config(section='postgresql_alfa')
@@ -133,7 +144,7 @@ def getParameters(basin,model):
 # Recuperar macroregion por id
 def getRegionFromId(basin):
 	result = ''
-	cursor = connect('postgresql').cursor()
+	cursor = connect('postgresql_alfa').cursor()
 	cursor.callproc('getBasin',[basin])
 	result = cursor.fetchall()
 	for row in result:
@@ -265,7 +276,7 @@ def getObjectives(ids):
 
 
 # Procesar parametros
-def processParameters(parametersList, basin, pathF, user, objectives):
+def processParameters(parametersList, basin, pathF, user, objectives, inputs_objs, outPreProc):
 # def processParameters(parametersList, basin, catchment,pathF, user):
     dictParameters = dict()
     out_path = ""
@@ -395,16 +406,16 @@ def processParameters(parametersList, basin, pathF, user, objectives):
 
             elif(riosType == "budget_conf"):
                 dictParameters[name] = {}
-                dictParameters[name]["years_to_spend"] = 1
+                dictParameters[name]["years_to_spend"] = 10
                 dictParameters[name]["activity_budget"] = {}
                 listAct = getActivities(user)
                 # print(listAct) 
                 for la in listAct:
                     dictParameters[name]["activity_budget"][remove_accents(la[0])] = {}
-                    dictParameters[name]["activity_budget"][remove_accents(la[0])]["budget_amount"] = 0
+                    dictParameters[name]["activity_budget"][remove_accents(la[0])]["budget_amount"] = 10000
 
                 dictParameters[name]["if_left_over"] = "Report remainder"
-                dictParameters[name]["floating_budget"] = 0
+                dictParameters[name]["floating_budget"] = 100000000000
 
                 value = dictParameters[name]
 
@@ -425,6 +436,8 @@ def processParameters(parametersList, basin, pathF, user, objectives):
                     dictParameters[name][obj[0]]["factors"] = {}
 
                     for param in listParametersObj:
+                        region = getRegionFromId(basin)
+                        label = region[4]
                         if(param[0] == 'Vegetative Cover Index' or param[0] == 'Land Use Land Cover Retention at pixel' 
                         or param[0] == 'On-pixel retention' or param[0] == 'On-pixel source'):
                             ranks = {
@@ -433,8 +446,7 @@ def processParameters(parametersList, basin, pathF, user, objectives):
                                 'On-pixel retention':'Sed_Ret',
                                 'On-pixel source': 'Sed_Exp'
                             }
-                            region = getRegionFromId(basin)
-                            label = region[4]
+                            
                             file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
                             values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
                             generateCsv(headers,values,file)
@@ -446,12 +458,23 @@ def processParameters(parametersList, basin, pathF, user, objectives):
                             dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["uri"] = file
                             dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["value_field"] = ranks[param[0]]
                         else:
-                            dictParameters[name][obj[0]]["factors"][param[0]] = {}
-                            dictParameters[name][obj[0]]["factors"][param[0]]["raster_uri"] = param[2]
-                            dictParameters[name][obj[0]]["factors"][param[0]]["bins"] = {}
-                            dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["inverted"] = False
-                            dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["type"] = "interpolated"
-                            dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["interpolation"] = "linear"
+                            
+                            if inputs_objs[objectives_mapping[obj[0]]].has_key(param[0]):
+                                dictParameters[name][obj[0]]["factors"][param[0]] = {}
+                                dictParameters[name][obj[0]]["factors"][param[0]]["raster_uri"] = os.path.join(outPreProc,inputs_objs[objectives_mapping[obj[0]]][param[0]].format(label))
+                                dictParameters[name][obj[0]]["factors"][param[0]]["bins"] = {}
+                                dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["inverted"] = False
+                                dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["type"] = "interpolated"
+                                dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["interpolation"] = "linear"
+                            else:
+                            # print(objectives_mapping[obj[0]])
+                            # print(inputs_objs)
+                                dictParameters[name][obj[0]]["factors"][param[0]] = {}
+                                dictParameters[name][obj[0]]["factors"][param[0]]["raster_uri"] = param[2]
+                                dictParameters[name][obj[0]]["factors"][param[0]]["bins"] = {}
+                                dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["inverted"] = False
+                                dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["type"] = "interpolated"
+                                dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["interpolation"] = "linear"
 
 
                 value = dictParameters[name]
@@ -655,7 +678,7 @@ def remove_accents(string):
     return string
 
 def execModel(args):
-    print(args)
+    # print(args)
     rios.execute(args)
 
 
@@ -692,13 +715,13 @@ def execModel(args):
 # # print(parameters)
 # executeFunction(44,[3],1,inputs)
 
-listP = getParameters(44,'rios')
-# catchment = exportToShp([3], "/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/")
-# parameters,out_path = processParameters(listP,44,catchment,"/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/",1000)
-objectives = [2,3,4,5,6,7,8]
-parameters,out_path = processParameters(listP,44,"/home/skaphe/Documentos/tnc/modelos/salidas/9_2020_10_24/",1000,objectives)
-print(parameters)
-execModel(parameters)
+# listP = getParameters(44,'rios')
+# # catchment = exportToShp([3], "/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/")
+# # parameters,out_path = processParameters(listP,44,catchment,"/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/",1000)
+# objectives = [2,3,4,5,6,7,8]
+# parameters,out_path = processParameters(listP,44,"/home/skaphe/Documentos/tnc/modelos/salidas/9_2020_10_24/",1000,objectives)
+# print(parameters)
+# execModel(parameters)
 
 
 # for l in listP:

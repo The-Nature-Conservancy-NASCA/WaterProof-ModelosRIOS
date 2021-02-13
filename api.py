@@ -1,6 +1,8 @@
 from flask import Flask
 from exec_preproc import executeFunction
+from execRIOS import getParameters,processParameters,execModel
 from flask import request
+from flask import jsonify
 import logging
 
 app = Flask(__name__)
@@ -29,8 +31,36 @@ def execPreproc():
 	
 	
 	inputs = {"do_erosion":bool(do_erosion),"do_nutrient_p":bool(do_np),"do_nutrient_n":bool(do_nn),"do_flood":bool(do_flood),"do_gw_bf":bool(do_gw_bf)}
-	print(inputs)
-	executeFunction(basin,catchment,id_usuario,inputs)
+	# print(inputs)
+	obj, outputPath = executeFunction(basin,catchment,id_usuario,inputs)
+
+	listP = getParameters(basin,'rios')
+
+	listObjs = []
+	
+	if do_erosion:
+		listObjs.append(2)
+		listObjs.append(3)
+	
+	if do_np:
+		listObjs.append(5)
+
+	if do_nn:
+		listObjs.append(4)
+
+	if do_flood:
+		listObjs.append(6)
+
+	if do_gw_bf:
+		listObjs.append(7)
+		listObjs.append(8)
+
+	parameters,out_path = processParameters(listP,basin,"/home/skaphe/Documentos/tnc/modelos/salidas/9_2020_10_24/",id_usuario,listObjs,obj, outputPath)
+
+	print(parameters)
+	
+	execModel(parameters)
+
 	return "Exito"
 	# user = request.args.get('nm')
 

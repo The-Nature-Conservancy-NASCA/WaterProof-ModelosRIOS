@@ -13,6 +13,37 @@ sys.path.append(os.path.split(os.getcwd())[0] + os.path.sep + 'RIOS_Toolbox')
 import RIOS_Toolbox.rios_preprocessor as Pro
 
 ruta = os.environ["PATH_FILES"]
+
+objectivesDict = {
+        'do_erosion':{
+            'Downslope retention index': 'erosion_downslope_retention_index_{0}.tif',
+            'Upslope source': 'erosion_upslope_source_{0}.tif',
+            'Riparian continuity': 'erosion_riparian_index_{0}.tif'
+        },
+        'do_nutrient_p':{
+            'Downslope retention index': 'phosphorus_downslope_retention_index_{0}.tif',
+            'Upslope source': 'phosphorus_upslope_source_{0}.tif',
+            'Riparian continuity': 'phosphorus_riparian_index_{0}.tif'
+        },
+        'do_nutrient_n':{
+            'Downslope retention index': 'nitrogen_downslope_retention_index_{0}.tif',
+            'Upslope source': 'nitrogen_upslope_source_{0}.tif',
+            'Riparian continuity': 'nitrogen_riparian_index_{0}.tif'
+        },
+        'do_flood':{
+            'Downslope retention index': 'flood_downslope_retention_index_{0}.tif',
+            'Upslope source': 'flood_upslope_source_{0}.tif',
+            'Slope Index': 'flood_slope_index_{0}.tif',
+            'Riparian continuity': 'flood_riparian_index_{0}.tif'
+        },
+        'do_gw_bf':{
+            'Downslope retention index': 'erosion_downslope_retention_index_{0}.tif',
+            'Upslope source': 'gwater_upslope_source_{0}.tif',
+            'Slope Index': 'flood_slope_index_{0}.tif'
+        }
+    }
+
+
 # Exportar cuenca delimitada a shp
 def exportToShp(catchment, path):
 	params = config(section='postgresql_alfa')
@@ -319,6 +350,8 @@ def executeFunction(basin,id_catchment,id_usuario,inputs):
     pathPreprocOut = os.path.join(path,"out","02-PREPROC_RIOS")
     pathCatchment = os.path.join(path,"in","catchment")
 
+    print(inputs)
+
 
     isdir = os.path.isdir(path)
     if(not isdir):
@@ -352,6 +385,13 @@ def executeFunction(basin,id_catchment,id_usuario,inputs):
 
     print(parameters)
 
+    objectives = {}
+
+    for i in inputs:
+        objectives[i] = objectivesDict[i]
+
+
+
     Pro.main(   working_path                = parameters["working_path"],
             output_path                 = parameters["output_path"] ,
             hydro_path                  = parameters["hydro_path"],
@@ -374,6 +414,8 @@ def executeFunction(basin,id_catchment,id_usuario,inputs):
             do_flood            = parameters["do_flood"], # Objetivo control de inundaciones
             do_gw_bf            = parameters["do_gw_bf"], # Objetivo recarga de agua subterranea y flujo base
             river_buffer_dist   = int(parameters["river_buffer_dist"])) # Buffer
+
+    return objectives, parameters["output_path"]
 
 # def executeFunction(basin,model,type,id_catchment,id_usuario):
 # 	date = datetime.date.today()
