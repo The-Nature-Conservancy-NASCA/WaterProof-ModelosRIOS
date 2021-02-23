@@ -233,6 +233,7 @@ def processParameters(parametersList, basin, catchment,pathF, inputs,user):
     out_folder = parametersList[0][9]
     out_path = os.path.join(os.getcwd(),pathF,'out',out_folder)
     in_path = os.path.join(os.getcwd(),pathF,'in',out_folder)
+    catchment_out = ""
 	
 
     isdir = os.path.isdir(out_path)
@@ -274,6 +275,7 @@ def processParameters(parametersList, basin, catchment,pathF, inputs,user):
             value = ''
         if(cut):
             value = cutRaster(catchment,value,in_path)
+            catchment_out = catchment
         if(file):
             value = catchment
         if(outPathType):
@@ -339,7 +341,7 @@ def processParameters(parametersList, basin, catchment,pathF, inputs,user):
     # print(value)
 
     
-	return dictParameters,out_path
+	return dictParameters,out_path,catchment_out
 
 def executeFunction(basin,id_catchment,id_usuario,inputs):
     date = datetime.date.today()
@@ -381,7 +383,7 @@ def executeFunction(basin,id_catchment,id_usuario,inputs):
     
     list = getParameters(basin,'preprocRIOS')
     catchment = exportToShp(id_catchment,path)
-    parameters,out_path = processParameters(list, basin, catchment,path,inputs,id_usuario)
+    parameters,out_path, catchmentOut = processParameters(list, basin, catchment,path,inputs,id_usuario)
 
     print(parameters)
 
@@ -415,7 +417,7 @@ def executeFunction(basin,id_catchment,id_usuario,inputs):
             do_gw_bf            = parameters["do_gw_bf"], # Objetivo recarga de agua subterranea y flujo base
             river_buffer_dist   = int(parameters["river_buffer_dist"])) # Buffer
 
-    return objectives, parameters["output_path"]
+    return objectives, parameters["output_path"], catchmentOut
 
 # def executeFunction(basin,model,type,id_catchment,id_usuario):
 # 	date = datetime.date.today()

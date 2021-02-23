@@ -170,12 +170,12 @@ def cutRaster(catchment,path,out_path):
 		shapes = [feature["geometry"] for feature in shapefile]
 	
 	with rasterio.open(path) as src:
-		if 'Stream' in path or 'Soil_Depth' in path:
-			nd = 255
-		else:
-			nd = -999
+		#if 'Stream' in path or 'Soil_Depth' in path:
+		#	nd = 255
+		#else:
+		#	nd = -999
 
-		out_image, out_transform = mask(src, shapes, crop=True,nodata=nd)
+		out_image, out_transform = mask(src, shapes, crop=True)
 		out_meta = src.meta
 
         print(path)
@@ -183,8 +183,7 @@ def cutRaster(catchment,path,out_path):
         out_meta.update({"driver": "GTiff",
                         "height": out_image.shape[1],
                         "width": out_image.shape[2],
-                        "transform": out_transform,
-                        "nodata":nd})
+                        "transform": out_transform})
 
 
 
@@ -276,7 +275,7 @@ def getObjectives(ids):
 
 
 # Procesar parametros
-def processParameters(parametersList, basin, pathF, user, objectives, inputs_objs, outPreProc):
+def processParameters(parametersList, basin, pathF, user, objectives, inputs_objs, outPreProc, catchment):
 # def processParameters(parametersList, basin, catchment,pathF, user):
     dictParameters = dict()
     out_path = ""
@@ -415,7 +414,7 @@ def processParameters(parametersList, basin, pathF, user, objectives, inputs_obj
                     dictParameters[name]["activity_budget"][remove_accents(la[0])]["budget_amount"] = 10000
 
                 dictParameters[name]["if_left_over"] = "Report remainder"
-                dictParameters[name]["floating_budget"] = 100000000000
+                dictParameters[name]["floating_budget"] = 999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
 
                 value = dictParameters[name]
 
@@ -510,6 +509,10 @@ def processParameters(parametersList, basin, pathF, user, objectives, inputs_obj
             values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
             generateCsv(headers,values,file)
             value = file
+
+        if(cut):
+            value = cutRaster(catchment,value,in_path)
+
 
 
         

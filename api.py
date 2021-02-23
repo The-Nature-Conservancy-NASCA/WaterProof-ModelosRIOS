@@ -4,6 +4,7 @@ from execRIOS import getParameters,processParameters,execModel
 from flask import request
 from flask import jsonify
 import logging
+import requests
 
 app = Flask(__name__)
 
@@ -32,7 +33,7 @@ def execPreproc():
 	
 	inputs = {"do_erosion":bool(do_erosion),"do_nutrient_p":bool(do_np),"do_nutrient_n":bool(do_nn),"do_flood":bool(do_flood),"do_gw_bf":bool(do_gw_bf)}
 	# print(inputs)
-	obj, outputPath = executeFunction(basin,catchment,id_usuario,inputs)
+	obj, outputPath, catchmentOut = executeFunction(basin,catchment,id_usuario,inputs)
 
 	listP = getParameters(basin,'rios')
 
@@ -55,11 +56,28 @@ def execPreproc():
 		listObjs.append(7)
 		listObjs.append(8)
 
-	parameters,out_path = processParameters(listP,basin,"/home/skaphe/Documentos/tnc/modelos/salidas/9_2020_10_24/",id_usuario,listObjs,obj, outputPath)
+	parameters,out_path = processParameters(listP,basin,"/home/skaphe/Documentos/tnc/modelos/salidas/9_2020_10_24/",id_usuario,listObjs,obj, outputPath, catchmentOut)
 
-	print(parameters)
+	# print(parameters)
 	
 	execModel(parameters)
+
+	headers = {
+    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36',
+	}
+
+	url = 'http://192.168.56.108:8000/cobTrans'
+
+	parameters = {
+		'pathCobs' : '/home/skaphe/Documentos/tnc/modelos/salidas/9_2020_10_24/out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios/continuous_activity_portfolios',
+		'nbs_id': 5,
+		'pathLULC': '/home/skaphe/Documentos/tnc/modelos/salidas/9_2020_10_24/in/04-RIOS/LULC_SA_1.tif'
+	}
+
+	data = makeGetRequest(url,parameters,5,headers)
+
+	print(data)
+
 
 	return "Exito"
 	# user = request.args.get('nm')
@@ -67,5 +85,12 @@ def execPreproc():
 def str2bool(v):
   return v.lower() in ("true", "True")
 
+def makeGetRequest(url,parameters,timeout,headers):
+	r = requests.get(url=url,params=parameters,timeout=timeout,headers=headers)
+	data = r.json()
+	return data
+
+
 if __name__ == '__main__':
 	app.run(host='0.0.0.0', port=5050)
+
