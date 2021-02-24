@@ -66,7 +66,7 @@ def execPreproc():
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36',
 	}
 
-	url = 'http://192.168.56.108:8000/cobTrans'
+	url = 'http://wfapp_py3_container:8000/cobTrans'
 
 	parameters = {
 		'pathCobs' : '/home/skaphe/Documentos/tnc/modelos/salidas/9_2020_10_24/out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios/continuous_activity_portfolios',
@@ -86,7 +86,7 @@ def str2bool(v):
   return v.lower() in ("true", "True")
 
 def makeGetRequest(url,parameters,timeout,headers):
-	r = requests.get(url=url,params=parameters,timeout=timeout,headers=headers)
+	r = requests.get(url=url,params=parameters)
 	data = r.json()
 	return data
 

@@ -20,3 +20,9 @@ services:
       - /data/salidas/:/home/skaphe/Documentos/tnc/modelos/salidas/
     ports:
       - 5050:5050
+    networks:
+      - modeloswfapp_shared-models
+      
+networks:
+  modeloswfapp_shared-models:
+    external: true
