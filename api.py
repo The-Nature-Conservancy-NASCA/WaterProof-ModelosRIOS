@@ -1,5 +1,5 @@
 from flask import Flask
-from exec_preproc import executeFunction
+from exec_preproc import executeFunction,getStudyCaseCatchments,getCatchmentBasin
 from execRIOS import getParameters,processParameters,execModel
 from flask import request
 from flask import jsonify
@@ -26,17 +26,29 @@ def execPreproc():
 	do_flood = str2bool(request.args.get('do_flood'))
 	do_gw_bf = str2bool(request.args.get('do_gw_bf'))
 	basin = request.args.get('basin')
-	catchment = request.args.get('catchment')
+	catchment = str(request.args.get('catchment'))
 	id_usuario = request.args.get('id_usuario')
+	id_case=request.args.get('id_case')
+	logging.debug('debug message')
 	# print(user)
-	
-	
 	inputs = {"do_erosion":bool(do_erosion),"do_nutrient_p":bool(do_np),"do_nutrient_n":bool(do_nn),"do_flood":bool(do_flood),"do_gw_bf":bool(do_gw_bf)}
-	# print(inputs)
+	catchments=getStudyCaseCatchments(id_case)
+	catchmentList=[]
+	print("CATCHMENT TYPE:::")
+	print(type(catchment))
+	for catch in catchments:
+		print("::SPLIT::::")
+		print(catch[0])
+		catchmentList.append(catch[0])
+	catchment=str(catchmentList[0])
+	basinQuery=getCatchmentBasin(catchment)
+	basin=str(basinQuery[0])
+	print(":::BASIN:::")
+	print(basin)
 	obj, outputPath, catchmentOut = executeFunction(basin,catchment,id_usuario,inputs)
-
 	listP = getParameters(basin,'rios')
-
+	print ("::CATCHMENT OUT:::")
+	print(catchmentOut)
 	listObjs = []
 	
 	if do_erosion:
@@ -66,7 +78,7 @@ def execPreproc():
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36',
 	}
 
-	url = 'http://wfapp_py3_container:8000/cobTrans'
+	url = 'http://dev.skaphe.com:8000/cobTrans'
 
 	parameters = {
 		'pathCobs' : '/home/skaphe/Documentos/tnc/modelos/salidas/9_2020_10_24/out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios/continuous_activity_portfolios',
