@@ -9,7 +9,7 @@
 import sys, os, rasterio, fiona, ogr, osr, datetime
 from rasterio.mask import mask
 from zonalStatistics import calculateRainfallDayMonth,calculateStatistic
-from createBioParamCsv import getColsParams,generateCsv,readCsv
+from createBioParamCsv import getColsParams,generateCsv,readCsv,getBiophysicParams
 sys.path.append('config')
 from config import config
 from connect import connect
@@ -278,6 +278,7 @@ def getObjectives(ids):
 def processParameters(parametersList, basin, pathF, user, objectives, inputs_objs, outPreProc, catchment):
 # def processParameters(parametersList, basin, catchment,pathF, user):
     dictParameters = dict()
+    default='y'
     out_path = ""
     in_path = ""
     out_folder = parametersList[0][9]
@@ -373,7 +374,8 @@ def processParameters(parametersList, basin, pathF, user, objectives, inputs_obj
                     region = getRegionFromId(basin)
                     label = region[4]
                     file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
-                    values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
+                    #values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
+                    values,headers=getBiophysicParams(user,label,default)
                     generateCsv(headers,values,file)
                     value = file
 
@@ -447,7 +449,8 @@ def processParameters(parametersList, basin, pathF, user, objectives, inputs_obj
                             }
                             
                             file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
-                            values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
+                            #values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
+                            values,headers=getBiophysicParams(user,label,default)
                             generateCsv(headers,values,file)
                             # value = file
                             dictParameters[name][obj[0]]["factors"][param[0]] = {}
@@ -506,7 +509,8 @@ def processParameters(parametersList, basin, pathF, user, objectives, inputs_obj
             region = getRegionFromId(basin)
             label = region[4]
             file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
-            values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
+            #values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
+            values,headers=getBiophysicParams(user,label,default)
             generateCsv(headers,values,file)
             value = file
 

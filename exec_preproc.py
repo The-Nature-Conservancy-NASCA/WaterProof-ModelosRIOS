@@ -5,7 +5,7 @@
 import sys, os, rasterio, fiona, ogr, osr, datetime
 from rasterio.mask import mask
 from zonalStatistics import calculateRainfallDayMonth,calculateStatistic
-from createBioParamCsv import getColsParams,generateCsv
+from createBioParamCsv import getColsParams,generateCsv,getBiophysicParams
 sys.path.append('config')
 from config import config
 from connect import connect
@@ -329,10 +329,13 @@ def processParameters(parametersList, basin, catchment, pathF, inputs, user):
         if(bio_param):
             region = getRegionFromId(basin)
             label = region[4]
+            default='y'
             file = os.path.join(os.getcwd(), pathF, 'in',
                                 "biophysical_table.csv")
-            values, headers = getColsParams(
-                "apps.skaphe.com", 27017, "waterProof", "parametros_biofisicos", user, label, True)
+            # values, headers = getColsParams(
+            #     "apps.skaphe.com", 27017, "waterProof", "parametros_biofisicos", user, label, True)
+            values,headers=getBiophysicParams(user,label,default)
+            print(user)
             generateCsv(headers, values, file)
             value = file
         dictParameters[name] = value

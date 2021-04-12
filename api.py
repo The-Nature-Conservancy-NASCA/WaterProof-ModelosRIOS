@@ -25,8 +25,8 @@ def execPreproc():
 	do_nn = str2bool(request.args.get('do_nn'))
 	do_flood = str2bool(request.args.get('do_flood'))
 	do_gw_bf = str2bool(request.args.get('do_gw_bf'))
-	basin = request.args.get('basin')
-	catchment = str(request.args.get('catchment'))
+	#basin = request.args.get('basin')
+	#catchment = str(request.args.get('catchment'))
 	id_usuario = request.args.get('id_usuario')
 	id_case=request.args.get('id_case')
 	logging.debug('debug message')
@@ -34,11 +34,7 @@ def execPreproc():
 	inputs = {"do_erosion":bool(do_erosion),"do_nutrient_p":bool(do_np),"do_nutrient_n":bool(do_nn),"do_flood":bool(do_flood),"do_gw_bf":bool(do_gw_bf)}
 	catchments=getStudyCaseCatchments(id_case)
 	catchmentList=[]
-	print("CATCHMENT TYPE:::")
-	print(type(catchment))
 	for catch in catchments:
-		print("::SPLIT::::")
-		print(catch[0])
 		catchmentList.append(catch[0])
 	catchment=str(catchmentList[0])
 	basinQuery=getCatchmentBasin(catchment)
