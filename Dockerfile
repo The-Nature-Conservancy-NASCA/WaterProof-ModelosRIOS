@@ -4,6 +4,7 @@ FROM python:2.7
 
 ADD requirements.txt /usr/local/wfapp_py2/requirements.txt
 ADD requirements_before.txt /usr/local/wfapp_py2/requirements_before.txt
+ADD dev_requirements.txt /usr/local/wfapp_py2/dev_requirements.txt
 
 RUN apt update && apt install -y libpq-dev gdal-bin libgdal-dev
 
@@ -25,6 +26,7 @@ WORKDIR /usr/local/wfapp_py2
 RUN pip install -r requirements_before.txt
 
 RUN pip install -r requirements.txt
+RUN pip install -r dev_requirements.txt
 
 COPY . /usr/local/wfapp_py2
 

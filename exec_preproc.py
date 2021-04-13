@@ -11,7 +11,7 @@ from config import config
 from connect import connect
 sys.path.append(os.path.split(os.getcwd())[0] + os.path.sep + 'RIOS_Toolbox')
 import RIOS_Toolbox.rios_preprocessor as Pro
-
+import logging
 ruta = os.environ["PATH_FILES"]
 
 objectivesDict = {
@@ -42,8 +42,8 @@ objectivesDict = {
             'Slope Index': 'flood_slope_index_{0}.tif'
         }
     }
-
-
+logger = logging.getLogger('exec_preproc')
+logger.setLevel(logging.DEBUG)
 # Exportar cuenca delimitada a shp
 def exportToShp(catchment, path):
 	params = config(section='postgresql_alfa')
@@ -234,7 +234,7 @@ def processParameters(parametersList, basin, catchment,pathF, inputs,user):
     out_path = os.path.join(os.getcwd(),pathF,'out',out_folder)
     in_path = os.path.join(os.getcwd(),pathF,'in',out_folder)
     catchment_out = ""
-	
+    logger.debug("processParameters :: start")
 
     isdir = os.path.isdir(out_path)
     if(not isdir):
@@ -343,17 +343,17 @@ def processParameters(parametersList, basin, catchment,pathF, inputs,user):
     
 	return dictParameters,out_path,catchment_out
 
-def executeFunction(basin,id_catchment,id_usuario,inputs):
-    date = datetime.date.today()
+def executeFunction(basin,id_catchment,id_usuario,inputs,study_case_id, out_directory):
+    
     # path = os.path.join("/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp",str(id_usuario) +  "_" + str(date.year) + "_" + str(date.month) + "_" + str(date.day))
     # path = os.path.join("data","wpdev","salidas",str(id_usuario) +  "_" + str(date.year) + "_" + str(date.month) + "_" + str(date.day))
-    path = os.path.join(ruta,"salidas",str(id_usuario) +  "_" + str(date.year) + "_" + str(date.month) + "_" + str(date.day))
+    path = os.path.join(ruta,"salidas",out_directory) #str(id_usuario) +  "_" + str(date.year) + "_" + str(date.month) + "_" + str(date.day)
     pathPreprocIn = os.path.join(path,"in","02-PREPROC_RIOS")
     pathPreprocOut = os.path.join(path,"out","02-PREPROC_RIOS")
     pathCatchment = os.path.join(path,"in","catchment")
 
     print(inputs)
-
+    logger.debug("executeFunction :: start")
 
     isdir = os.path.isdir(path)
     if(not isdir):
@@ -385,7 +385,7 @@ def executeFunction(basin,id_catchment,id_usuario,inputs):
     catchment = exportToShp(id_catchment,path)
     parameters,out_path, catchmentOut = processParameters(list, basin, catchment,path,inputs,id_usuario)
 
-    print(parameters)
+    logger.debug("parameters :: %s", parameters)
 
     objectives = {}
 

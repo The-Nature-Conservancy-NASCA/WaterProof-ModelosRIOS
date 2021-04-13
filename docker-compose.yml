@@ -5,6 +5,7 @@ services:
     image: wfapp_py2
     container_name: wfapp_py2_container
     build: .
+    # restart: always
     environment:
       - PG_HOST=dev.skaphe.com
       - PG_GEO_DATABASE=geonode_data
@@ -16,8 +17,10 @@ services:
       - PG_PORT=5432
       - PATH_FILES=/home/skaphe/Documentos/tnc/modelos/
     volumes:
-      - /data/global_datasets/:/home/skaphe/Documentos/tnc/modelos/entradas/
-      - /data/salidas/:/home/skaphe/Documentos/tnc/modelos/salidas/
+      - F:/PROYECTOS/TNC/WFAPP/modelos/entradas/:/home/skaphe/Documentos/tnc/modelos/entradas/
+      - F:/PROYECTOS/TNC/WFAPP/modelos/salidas/:/home/skaphe/Documentos/tnc/modelos/salidas/
+      # - /data/global_datasets/:/home/skaphe/Documentos/tnc/modelos/entradas/
+      # - /data/salidas/:/home/skaphe/Documentos/tnc/modelos/salidas/
     ports:
       - 5050:5050
     networks:
