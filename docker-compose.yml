@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 
 services:
   wfapp_py2:
@@ -23,9 +23,10 @@ services:
       # - /data/salidas/:/home/skaphe/Documentos/tnc/modelos/salidas/
     ports:
       - 5050:5050
-    networks:
-      - modeloswfapp_shared-models
+      - 5678:5678
+#     networks:
+#       - modeloswfapp_shared-models
       
-networks:
-  modeloswfapp_shared-models:
-    external: true
+# networks:
+#   modeloswfapp_shared-models:
+#     external: true

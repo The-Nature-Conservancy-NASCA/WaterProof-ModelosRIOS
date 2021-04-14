@@ -407,7 +407,7 @@ def processParameters(parametersList, basin, pathF, user, objectives, inputs_obj
 
             elif(riosType == "budget_conf"):
                 dictParameters[name] = {}
-                dictParameters[name]["years_to_spend"] = 10  # Parametro a sustituir por el numero de años
+                dictParameters[name]["years_to_spend"] = 30  # Parametro a sustituir por el numero de años
                 dictParameters[name]["activity_budget"] = {}
                 listAct = getActivities(user)
                 # print(listAct) 
@@ -683,7 +683,7 @@ def remove_accents(string):
     return string
 
 def execModel(args):
-    logger.debug("execModel :: args :: %s", args)
+    # logger.debug("execModel :: args :: %s", args)
     rios.execute(args)
 
 

@@ -3,10 +3,11 @@ from exec_preproc import executeFunction
 from execRIOS import getParameters,processParameters,execModel
 from flask import request
 from flask import jsonify
-import date
+import datetime
 import logging
 import requests
 import debugpy
+import ptvsd
 app = Flask(__name__)
 logger = logging.getLogger('rios_api') # grabs underlying WSGI logger
 logger.setLevel(logging.DEBUG)
@@ -29,15 +30,15 @@ def execPreproc():
 	basin = request.args.get('basin')
 	catchment = request.args.get('catchment')
 	id_usuario = request.args.get('id_usuario')
-	study_case_id = request.args.get('study_case_id'),
-	nbs_id = request.args.get('nbs_id'),
+	study_case_id = request.args.get('study_case')
+	nbs_id = request.args.get('nbs_id')	
 	# print(user)
 	logger.debug("start execPreProc")
 	
 	inputs = {"do_erosion":bool(do_erosion),"do_nutrient_p":bool(do_np),"do_nutrient_n":bool(do_nn),"do_flood":bool(do_flood),"do_gw_bf":bool(do_gw_bf)}
 	# print(inputs)
-	date = datetime.date.today()
-	out_directory = "%s-%s-%s-%s-%s-%s" % {id_usuario, study_case_id, catchment, date.year, date.month, date.day}
+	today = datetime.date.today()
+	out_directory = "%s-%s-%s-%s-%s-%s" % (int(id_usuario), int(study_case_id), int(catchment), today.year, today.month, today.day)
 	obj, outputPath, catchmentOut = executeFunction(basin,catchment,id_usuario,inputs, study_case_id, out_directory)
 
 	list_parameters = getParameters(basin,'rios')
@@ -61,7 +62,7 @@ def execPreproc():
 		listObjs.append(7)
 		listObjs.append(8)
 	
-	process_path = "/home/skaphe/Documentos/tnc/modelos/salidas/%s/" % {out_directory}
+	process_path = "/home/skaphe/Documentos/tnc/modelos/salidas/%s/" % (out_directory)
 	parameters,out_path = processParameters(list_parameters,basin,process_path,id_usuario,listObjs,obj, outputPath, catchmentOut)
 
 	# print(parameters)
@@ -136,7 +137,7 @@ def execPreproc():
 
 	# TODO :: Evaluar si se puede optimizar execInvest adicionando los llamador a 'Carbon' directamente en current, BaU y NBS
 
-	# TODO :: Ejecutar ¡¡¡ desagregacion !!!
+	# TODO :: Ejecutar desagregacion
 
 	# TODO :: Ejecutar WB 
 
@@ -164,6 +165,7 @@ def makeGetRequest(url,parameters,timeout,headers):
 
 if __name__ == '__main__':
 	logging.debug("start debugging port :: 5678")
-	debugpy.listen(5678)
+	# debugpy.listen(5678)
+	ptvsd.enable_attach(address=('0.0.0.0', 5678), redirect_output=True)
 	app.run(host='0.0.0.0', port=5050)
 
