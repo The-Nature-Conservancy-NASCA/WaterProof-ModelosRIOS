@@ -1,5 +1,5 @@
 from flask import Flask
-from exec_preproc import executeFunction
+from exec_preproc import executeFunction,getStudyCaseCatchments,getCatchmentBasin
 from execRIOS import getParameters,processParameters,execModel
 from flask import request
 from flask import jsonify
@@ -27,22 +27,26 @@ def execPreproc():
 	do_nn = str2bool(request.args.get('do_nn'))
 	do_flood = str2bool(request.args.get('do_flood'))
 	do_gw_bf = str2bool(request.args.get('do_gw_bf'))
-	basin = request.args.get('basin')
-	catchment = request.args.get('catchment')
+	#basin = request.args.get('basin')
+	#catchment = str(request.args.get('catchment'))
 	id_usuario = request.args.get('id_usuario')
-	study_case_id = request.args.get('study_case')
-	nbs_id = request.args.get('nbs_id')	
+	id_case=request.args.get('id_case')
+	logging.debug('debug message')
 	# print(user)
-	logger.debug("start execPreProc")
-	
 	inputs = {"do_erosion":bool(do_erosion),"do_nutrient_p":bool(do_np),"do_nutrient_n":bool(do_nn),"do_flood":bool(do_flood),"do_gw_bf":bool(do_gw_bf)}
-	# print(inputs)
-	today = datetime.date.today()
-	out_directory = "%s-%s-%s-%s-%s-%s" % (int(id_usuario), int(study_case_id), int(catchment), today.year, today.month, today.day)
-	obj, outputPath, catchmentOut = executeFunction(basin,catchment,id_usuario,inputs, study_case_id, out_directory)
-
-	list_parameters = getParameters(basin,'rios')
-
+	catchments=getStudyCaseCatchments(id_case)
+	catchmentList=[]
+	for catch in catchments:
+		catchmentList.append(catch[0])
+	catchment=str(catchmentList[0])
+	basinQuery=getCatchmentBasin(catchment)
+	basin=str(basinQuery[0])
+	print(":::BASIN:::")
+	print(basin)
+	obj, outputPath, catchmentOut = executeFunction(basin,catchment,id_usuario,inputs)
+	listP = getParameters(basin,'rios')
+	print ("::CATCHMENT OUT:::")
+	print(catchmentOut)
 	listObjs = []
 	
 	if do_erosion:
@@ -61,9 +65,8 @@ def execPreproc():
 	if do_gw_bf:
 		listObjs.append(7)
 		listObjs.append(8)
-	
-	process_path = "/home/skaphe/Documentos/tnc/modelos/salidas/%s/" % (out_directory)
-	parameters,out_path = processParameters(list_parameters,basin,process_path,id_usuario,listObjs,obj, outputPath, catchmentOut)
+
+	parameters,out_path = processParameters(listP,basin,"/home/skaphe/Documentos/tnc/modelos/salidas/9_2020_10_24/",id_usuario,listObjs,obj, outputPath, catchmentOut)
 
 	# print(parameters)
 	
@@ -72,28 +75,13 @@ def execPreproc():
 	headers = {
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36',
 	}
-	base_url_api = "http://wfapp_py3_container:8000/"
-	base_url_api = "http://dev.skaphe.com:8000/"
-	url = base_url_api + 'cobTrans'
-	# Se debe iterar de acuerdo al numero de captaciones q pueda llegar a tener el caso de estudio
-	parameters = {
-		'pathCobs' : process_path + 'out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios/continuous_activity_portfolios',
-		'nbs_id': nbs_id,
-		'pathLULC': process_path + 'in/04-RIOS/LULC_SA_1.tif'
-	}
 
-	data = makeGetRequest(url,parameters,nbs_id,headers)
-
-	''' Code for execInvest'''
-	''' 1. type == current '''
-	url = base_url_api + 'execInvest'
+	url = 'http://dev.skaphe.com:8000/cobTrans'
 
 	parameters = {
-		'type' : 'current',
-		'id_usuario': id_usuario, #1,
-		'basin' : basin,  # 44,
-		'models' : ['sdr','awy','ndr'],
-		'catchment' : catchment, #1,
+		'pathCobs' : '/home/skaphe/Documentos/tnc/modelos/salidas/9_2020_10_24/out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios/continuous_activity_portfolios',
+		'nbs_id': 5,
+		'pathLULC': '/home/skaphe/Documentos/tnc/modelos/salidas/9_2020_10_24/in/04-RIOS/LULC_SA_1.tif'
 	}
 
 	''' 1. type == current '''

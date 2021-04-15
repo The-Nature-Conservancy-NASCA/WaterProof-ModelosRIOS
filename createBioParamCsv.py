@@ -1,6 +1,8 @@
 from pymongo import MongoClient
-import os, csv
-
+import os, csv,sys
+sys.path.append('config')
+from config import config
+from connect import connect
 # Author: Diego Fernando Rodriguez
 # Date: 29/11/2020
 
@@ -11,6 +13,24 @@ def connectMongo(host,port):
     connection = MongoClient(host,port)
     return connection
 
+# Obtener parametros biofisicos filtrado por macroregion
+
+def getBiophysicParams(user,macro_region,default):
+    results = list()
+    keys=list()
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('get_biophysycal_params', [macro_region,default,user])
+    result = cursor.fetchall()
+    resultKeys=cursor.description
+    for key in resultKeys:
+        print("RESULT KEY")
+        print(key[0])
+        keys.append(key[0])
+    for row in result:
+        print("Row")
+        print(row)
+        results.append(row)
+    return results,keys
 
 
 def getColsParams(host,port,database,collection,user,macro_region,default):
@@ -30,8 +50,10 @@ def getColsParams(host,port,database,collection,user,macro_region,default):
         first = docs[0]
         keys = list(first.keys())
         for x in docs:
+            #print(x)
             results.append(list(x.values()))
     elif countUser > 0:
+        print("::MAS DE UN USUARIO:::")
         queryCol = {"macro_region": str(macro_region), "default":"n","user": str(user)}
         queryColDef = {"macro_region": str(macro_region), "default":"y"}
         docs = col.find(queryCol)
@@ -49,7 +71,8 @@ def getColsParams(host,port,database,collection,user,macro_region,default):
                     results.append(list(y.values()))
     
     con.close()
-
+    print("KEYS")
+    print(keys)
     return results, keys
 
 def generateCsv(header,values, file):
@@ -82,13 +105,6 @@ def readCsv(file,field):
                 line_count += 1
 
     return resultList
-
-
-
-
-
-
-
 
 
 # connectMongo("apps.skaphe.com",27017,"waterProof","parametros_biofisicos")
