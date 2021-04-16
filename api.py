@@ -6,13 +6,14 @@ from flask import jsonify
 import datetime
 import logging
 import requests
+import os
 import debugpy
 import ptvsd
 app = Flask(__name__)
-logger = logging.getLogger('rios_api') # grabs underlying WSGI logger
+logger = logging.getLogger(__name__) # grabs underlying WSGI logger
 logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler('test.log') # creates handler for the log file
-logger.addHandler(handler) # adds handler to the werkzeug WSGI logger
+# handler = logging.FileHandler('test.log') # creates handler for the log file
+# logger.addHandler(handler) # adds handler to the werkzeug WSGI logger
 
 @app.route('/welcome/', methods=['GET'])
 def welcome():
@@ -31,9 +32,13 @@ def execPreproc():
 	#catchment = str(request.args.get('catchment'))
 	id_usuario = request.args.get('id_usuario')
 	id_case=request.args.get('id_case')
+	id_nbs=request.args.get('id_nbs')
+
 	logging.debug('debug message')
 	# print(user)
 	inputs = {"do_erosion":bool(do_erosion),"do_nutrient_p":bool(do_np),"do_nutrient_n":bool(do_nn),"do_flood":bool(do_flood),"do_gw_bf":bool(do_gw_bf)}
+	
+	
 	catchments=getStudyCaseCatchments(id_case)
 	catchmentList=[]
 	for catch in catchments:
@@ -41,10 +46,14 @@ def execPreproc():
 	catchment=str(catchmentList[0])
 	basinQuery=getCatchmentBasin(catchment)
 	basin=str(basinQuery[0])
+
+	today = datetime.date.today()
+	out_directory = "%s-%s-%s-%s-%s-%s" % (int(id_usuario), int(id_case), int(catchment), today.year, today.month, today.day)
+
 	print(":::BASIN:::")
 	print(basin)
 	obj, outputPath, catchmentOut = executeFunction(basin,catchment,id_usuario,inputs)
-	listP = getParameters(basin,'rios')
+	list_parameters = getParameters(basin,'rios')
 	print ("::CATCHMENT OUT:::")
 	print(catchmentOut)
 	listObjs = []
@@ -66,7 +75,21 @@ def execPreproc():
 		listObjs.append(7)
 		listObjs.append(8)
 
-	parameters,out_path = processParameters(listP,basin,"/home/skaphe/Documentos/tnc/modelos/salidas/9_2020_10_24/",id_usuario,listObjs,obj, outputPath, catchmentOut)
+	process_path = "/home/skaphe/Documentos/tnc/modelos/salidas/%s/" % (out_directory)
+	isdir = os.path.isdir(process_path)
+	if(not isdir):
+		os.mkdir(process_path)
+	
+	isdir = os.path.isdir(process_path + 'out')
+	if(not isdir):
+		os.mkdir(process_path + 'out')
+
+	isdir = os.path.isdir(process_path + 'in')
+	if(not isdir):
+		os.mkdir(process_path + 'in')
+
+
+	parameters,out_path = processParameters(list_parameters,basin,process_path,id_usuario,listObjs,obj, outputPath, catchmentOut)
 
 	# print(parameters)
 	
@@ -76,50 +99,62 @@ def execPreproc():
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36',
 	}
 
-	url = 'http://dev.skaphe.com:8000/cobTrans'
+	base_url_api = 'http://dev.skaphe.com:8000/'
+	base_url_api = 'http://wfapp_py3_container:8000/'
+	url = base_url_api + 'cobTrans'
 
 	parameters = {
-		'pathCobs' : '/home/skaphe/Documentos/tnc/modelos/salidas/9_2020_10_24/out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios/continuous_activity_portfolios',
+		'pathCobs' : process_path + '/out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios/continuous_activity_portfolios',
 		'nbs_id': 5,
-		'pathLULC': '/home/skaphe/Documentos/tnc/modelos/salidas/9_2020_10_24/in/04-RIOS/LULC_SA_1.tif'
+		'pathLULC': process_path + '/in/04-RIOS/LULC_SA_1.tif'
 	}
 
+	data = makeGetRequest(url, parameters, 5,headers)
+
+	''' Exec Invest '''
+	logger.debug("*** Execute Invest ***")
+	url = base_url_api + 'execInvest'
 	''' 1. type == current '''
-	try:
-		data_exec_invest_current = makeGetRequest(url,parameters,nbs_id,headers)
-	except:
-		logging.warning("error executing::  %s", url)
-
-	''' 2. type == currentCarbon '''
-	
 	parameters = {
-		'type' : 'currentCarbon',
-		'id_usuario': id_usuario, #1,
-		'basin' : basin,  # 44,
-		'models' : ['sdr','awy','ndr'],
-		'catchment' : catchment, #1,
+		'type' : 'current',
+		'id_usuario' : id_usuario,
+		'basin' : basin,
+		'models' : ['sdr', 'awy', 'ndr'],
+		'catchment' : catchment,
+		'carbon' : 'y',
 	}
+	logger.debug("1. Execute Invest (Current)")
 	try:
-		data_exec_invest_current_carbon = makeGetRequest(url,parameters,nbs_id,headers)
+		data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
 	except:
-		logging.warning("error executing::  %s", url)
+		logger.warning("error executing::  %s", url)
+
+	#''' 2. type == currentCarbon '''
+	# parameters['type'] = 'currentCarbon'
+	
+	# try:
+	# 	data_exec_invest_current_carbon = makeGetRequest(url,parameters,5,headers)
+	# except:
+	# 	logger.warning("error executing::  %s", url)
 
 
-	''' 3. type == BaU '''
+	''' 2. type == BaU '''
 	# campo analysis_period_value de study_cases
+	parameters['type'] = 'BaU'
+	logger.debug("2. Execute Invest (BaU) ")
 	try:
-		data_exec_invest_current = makeGetRequest(url,parameters,nbs_id,headers)
+		data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
 	except:
-		logging.warning("error executing::  %s", url)
+		logger.warning("error executing::  %s", url)
 
 	''' Ejecutar Carbon para BaU'''
 
 	''' 4. type == NBS '''
 	# campo analysis_period_value de study_cases
-	try:
-		data_exec_invest_current = makeGetRequest(url,parameters,nbs_id,headers)
-	except:
-		logging.warning("error executing::  %s", url)
+	# try:
+	# 	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+	# except:
+	# 	logger.warning("error executing::  %s", url)
 
 	''' Ejecutar Carbon para NBS'''
 
@@ -152,7 +187,7 @@ def makeGetRequest(url,parameters,timeout,headers):
 
 
 if __name__ == '__main__':
-	logging.debug("start debugging port :: 5678")
+	logger.debug("start debugging port :: 5678")
 	# debugpy.listen(5678)
 	ptvsd.enable_attach(address=('0.0.0.0', 5678), redirect_output=True)
 	app.run(host='0.0.0.0', port=5050)
