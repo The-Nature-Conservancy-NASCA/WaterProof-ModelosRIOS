@@ -2,12 +2,14 @@
 # Author: Diego Rodriguez - Skaphe Tecnologia SAS
 # WFApp
 
+import sys
+import os
+sys.path.append('config')
+sys.path.append(os.path.split(os.getcwd())[0] + os.path.sep + 'RIOS_Toolbox')
 import logging
 import RIOS_Toolbox.rios_preprocessor as Pro
 from connect import connect
 from config import config
-import sys
-import os
 import rasterio
 import fiona
 import ogr
@@ -16,8 +18,7 @@ import datetime
 from rasterio.mask import mask
 from zonalStatistics import calculateRainfallDayMonth, calculateStatistic
 from createBioParamCsv import getColsParams, generateCsv, getBiophysicParams
-sys.path.append('config')
-sys.path.append(os.path.split(os.getcwd())[0] + os.path.sep + 'RIOS_Toolbox')
+
 ruta = os.environ["PATH_FILES"]
 
 objectivesDict = {
