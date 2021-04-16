@@ -16,17 +16,17 @@ services:
       - PG_PASSWORD=bYMk&M{6E]9s?g"*[Q^;I^m4@x5qkO
       - PG_PORT=5432
       - PATH_FILES=/home/skaphe/Documentos/tnc/modelos/
-    volumes:
-      - F:/PROYECTOS/TNC/WFAPP/modelos/entradas/:/home/skaphe/Documentos/tnc/modelos/entradas/
-      - F:/PROYECTOS/TNC/WFAPP/modelos/salidas/:/home/skaphe/Documentos/tnc/modelos/salidas/
-      # - /data/global_datasets/:/home/skaphe/Documentos/tnc/modelos/entradas/
-      # - /data/salidas/:/home/skaphe/Documentos/tnc/modelos/salidas/
+    volumes:      
+      - /data/global_datasets/:/home/skaphe/Documentos/tnc/modelos/entradas/
+      - /data/outputs/:/home/skaphe/Documentos/tnc/modelos/salidas/
+      # - F:/PROYECTOS/TNC/WFAPP/modelos/entradas/:/home/skaphe/Documentos/tnc/modelos/entradas/
+      # - F:/PROYECTOS/TNC/WFAPP/modelos/salidas/:/home/skaphe/Documentos/tnc/modelos/salidas/
     ports:
       - 5050:5050
       - 5678:5678
-#     networks:
-#       - modeloswfapp_shared-models
+    networks:
+      - modeloswfapp_shared-models
       
-# networks:
-#   modeloswfapp_shared-models:
-#     external: true
+networks:
+  modeloswfapp_shared-models:
+    external: true
