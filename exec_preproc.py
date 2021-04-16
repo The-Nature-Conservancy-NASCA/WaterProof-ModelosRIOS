@@ -2,16 +2,22 @@
 # Author: Diego Rodriguez - Skaphe Tecnologia SAS
 # WFApp
 
-import sys, os, rasterio, fiona, ogr, osr, datetime
-from rasterio.mask import mask
-from zonalStatistics import calculateRainfallDayMonth,calculateStatistic
-from createBioParamCsv import getColsParams,generateCsv,getBiophysicParams
-sys.path.append('config')
-from config import config
-from connect import connect
-sys.path.append(os.path.split(os.getcwd())[0] + os.path.sep + 'RIOS_Toolbox')
-import RIOS_Toolbox.rios_preprocessor as Pro
 import logging
+import RIOS_Toolbox.rios_preprocessor as Pro
+from connect import connect
+from config import config
+import sys
+import os
+import rasterio
+import fiona
+import ogr
+import osr
+import datetime
+from rasterio.mask import mask
+from zonalStatistics import calculateRainfallDayMonth, calculateStatistic
+from createBioParamCsv import getColsParams, generateCsv, getBiophysicParams
+sys.path.append('config')
+sys.path.append(os.path.split(os.getcwd())[0] + os.path.sep + 'RIOS_Toolbox')
 ruta = os.environ["PATH_FILES"]
 
 objectivesDict = {
@@ -41,9 +47,12 @@ objectivesDict = {
         'Upslope source': 'gwater_upslope_source_{0}.tif',
         'Slope Index': 'flood_slope_index_{0}.tif'
     }
+}
 logger = logging.getLogger('exec_preproc')
 logger.setLevel(logging.DEBUG)
 # Exportar cuenca delimitada a shp
+
+
 def exportToShp(catchment, path):
     params = config(section='postgresql_alfa')
     connString = "PG: host=" + params['host'] + " dbname=" + params['database'] + \
@@ -80,7 +89,7 @@ def exportToShp(catchment, path):
     #     params = params[:-1] + ')'
     #     print(":::PARAMS:::")
     #     print(params)
-   
+
     if (catchment != -1):
         sql = "select * from waterproof_intake_polygon where delimitation_type = 'SBN' and intake_id" + \
             str(params)
@@ -107,7 +116,7 @@ def exportToShp(catchment, path):
             out_layer.CreateFeature(featDef)
             feat.Destroy()
             feat = layer.GetNextFeature()
-    
+
     conn.Destroy()
     out_ds.Destroy()
 
@@ -158,7 +167,8 @@ def getStudyCaseCatchments(caseStudy):
         listResult.append(row)
     return listResult
 
-# Obtener captaciones asociadas a un caso de estudio  
+# Obtener captaciones asociadas a un caso de estudio
+
 
 def getCatchmentBasin(catchment):
     result = ''
@@ -329,12 +339,12 @@ def processParameters(parametersList, basin, catchment, pathF, inputs, user):
         if(bio_param):
             region = getRegionFromId(basin)
             label = region[4]
-            default='y'
+            default = 'y'
             file = os.path.join(os.getcwd(), pathF, 'in',
                                 "biophysical_table.csv")
             # values, headers = getColsParams(
             #     "apps.skaphe.com", 27017, "waterProof", "parametros_biofisicos", user, label, True)
-            values,headers=getBiophysicParams(user,label,default)
+            values, headers = getBiophysicParams(user, label, default)
             print(user)
             generateCsv(headers, values, file)
             value = file
@@ -423,7 +433,7 @@ def executeFunction(basin, id_catchment, id_usuario, inputs):
     isdir = os.path.isdir(pathCatchment)
     if(not isdir):
         os.mkdir(pathCatchment)
-    
+
     list = getParameters(basin, 'preprocRIOS')
     catchment = exportToShp(id_catchment, path)
     print("::CATCHMENT RESULT")
