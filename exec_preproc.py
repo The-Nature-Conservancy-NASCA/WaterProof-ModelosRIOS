@@ -5,7 +5,7 @@
 import sys, os, rasterio, fiona, ogr, osr, datetime
 from rasterio.mask import mask
 from zonalStatistics import calculateRainfallDayMonth,calculateStatistic
-from createBioParamCsv import getColsParams,generateCsv,getBiophysicParams
+from createBioParamCsv import getColsParams,generateCsv,getDefaultBiophysicParams,getUserBiophysicParams
 sys.path.append('config')
 from config import config
 from connect import connect
@@ -173,8 +173,22 @@ def getCatchmentBasin(catchment):
         listResult.append(row[0])
     return listResult
 
-# Obtener parametros de modelo
 
+# Obtener NBS asociadas al caso de estudio
+
+def getStudyCaseNbs(caseStudy):
+    result = ''
+    listResult = []
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('get_studycase_nbs', [caseStudy])
+    result = cursor.fetchall()
+    for row in result:
+        print("Row")
+        print(row)
+        listResult.append(row)
+    return listResult
+
+# Obtener parametros de modelo
 
 def getParameters(basin, model):
     result = ''
@@ -265,7 +279,7 @@ def cutRaster(catchment, path, out_path):
 # Procesar parametros
 
 
-def processParameters(parametersList, basin, catchment, pathF, inputs, user):
+def processParameters(parametersList, basin,id_catchment, studyCase,catchment, pathF, inputs, user):
     dictParameters = dict()
     out_path = ""
     in_path = ""
@@ -334,8 +348,16 @@ def processParameters(parametersList, basin, catchment, pathF, inputs, user):
                                 "biophysical_table.csv")
             # values, headers = getColsParams(
             #     "apps.skaphe.com", 27017, "waterProof", "parametros_biofisicos", user, label, True)
-            values,headers=getBiophysicParams(user,label,default)
-            print(user)
+            values,headers=getDefaultBiophysicParams(user,label,default)
+            valuesUser,headersUser=getUserBiophysicParams(id_catchment,studyCase,user,label,'N')
+            # Reemplazar los parametros del usuario 
+            # en los parametros por defecto
+            for userIdx,valUser in enumerate(valuesUser):
+                for defIdx,defVal in enumerate(values):
+                    if (valUser[0]==defVal[0]):
+                        values[defIdx]=valUser
+            print(":::VALUES:::")
+            print(values)
             generateCsv(headers, values, file)
             value = file
         dictParameters[name] = value
@@ -386,7 +408,7 @@ def processParameters(parametersList, basin, catchment, pathF, inputs, user):
         return dictParameters, out_path, catchment_out
 
 
-def executeFunction(basin, id_catchment, id_usuario, inputs):
+def executeFunction(basin, id_catchment, id_usuario, inputs,id_case):
     date = datetime.date.today()
     # path = os.path.join("/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp",str(id_usuario) +  "_" + str(date.year) + "_" + str(date.month) + "_" + str(date.day))
     # path = os.path.join("data","wpdev","salidas",str(id_usuario) +  "_" + str(date.year) + "_" + str(date.month) + "_" + str(date.day))
@@ -429,7 +451,7 @@ def executeFunction(basin, id_catchment, id_usuario, inputs):
     print("::CATCHMENT RESULT")
     print(catchment)
     parameters, out_path, catchmentOut = processParameters(
-        list, basin, catchment, path, inputs, id_usuario)
+        list, basin,id_catchment,id_case, catchment, path, inputs, id_usuario,)
 
     print(parameters)
 
