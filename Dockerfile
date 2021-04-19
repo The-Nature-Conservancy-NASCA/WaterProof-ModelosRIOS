@@ -2,8 +2,9 @@ FROM python:2.7
 
 #ADD environment.yml /tmp/environment.yml
 
-ADD requirements.txt /usr/local/wfapp_py2/requirements.txt
-ADD requirements_before.txt /usr/local/wfapp_py2/requirements_before.txt
+ADD requirements.txt /app/requirements.txt
+ADD requirements_before.txt /app/requirements_before.txt
+ADD dev_requirements.txt /app/dev_requirements.txt
 
 RUN apt update && apt install -y libpq-dev gdal-bin libgdal-dev
 
@@ -20,13 +21,13 @@ RUN apt update && apt install -y libpq-dev gdal-bin libgdal-dev
 #ENV PATH /opt/conda/envs/$(head -1 /tmp/environment.yml | cut -d' ' -f2)/bin:$PATH
 #SHELL ["conda", "run", "-n", "RIOS", "/bin/bash", "-c"]
 
-WORKDIR /usr/local/wfapp_py2
+WORKDIR /app
 
 RUN pip install -r requirements_before.txt
-
 RUN pip install -r requirements.txt
+RUN pip install -r dev_requirements.txt
 
-COPY . /usr/local/wfapp_py2
+COPY . /app
 
 RUN chmod +x api.py
 

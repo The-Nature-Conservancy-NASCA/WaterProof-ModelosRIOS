@@ -7,13 +7,13 @@ services:
     build: .
     # restart: always
     environment:
-      - PG_HOST=dev.skaphe.com
+      - PG_HOST=water-proof.org
       - PG_GEO_DATABASE=geonode_data
-      - PG_GEO_USER=postgres
-      - PG_GEO_PASSWORD=bYMk&M{6E]9s?g"*[Q^;I^m4@x5qkO
+      - PG_GEO_USER=geonode_data
+      - PG_GEO_PASSWORD=G30N0D3
       - PG_DATABASE=geonode
-      - PG_USER=postgres
-      - PG_PASSWORD=bYMk&M{6E]9s?g"*[Q^;I^m4@x5qkO
+      - PG_USER=geonode
+      - PG_PASSWORD=G30NOD3
       - PG_PORT=5432
       - PATH_FILES=/home/skaphe/Documentos/tnc/modelos/
     volumes:
