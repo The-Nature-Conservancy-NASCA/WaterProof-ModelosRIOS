@@ -9,6 +9,7 @@ import requests
 import os
 import debugpy
 import ptvsd
+import json
 app = Flask(__name__)
 logger = logging.getLogger(__name__)  # grabs underlying WSGI logger
 logger.setLevel(logging.DEBUG)
@@ -99,6 +100,8 @@ def execPreproc():
     # print(parameters)
 
     execModel(parameters)
+    # with (open(process_path + 'parameters.json', 'w')) as fp:
+    #     json.dump(parameters, fp)
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36',

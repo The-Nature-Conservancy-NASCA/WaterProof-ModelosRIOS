@@ -67,7 +67,9 @@ def exportToShp(catchment, path):
     source = osr.SpatialReference()
     source.ImportFromEPSG(4326)
     target = osr.SpatialReference()
-    target.ImportFromEPSG(3857)
+    epsg_3857 = 3857
+    epsg_54004 = 54004
+    target.ImportFromEPSG(epsg_54004)
     transform = osr.CoordinateTransformation(source, target)
 
     # Schema definition of SHP file

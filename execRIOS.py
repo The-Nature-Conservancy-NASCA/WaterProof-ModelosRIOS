@@ -329,7 +329,7 @@ def processParameters(parametersList, basin, pathF, user, objectives, inputs_obj
                     dictParameters[name][remove_accents(la[0])] = {}
                     dictParameters[name][remove_accents(la[0])]["measurement_unit"] = measurement_unit
                     dictParameters[name][remove_accents(la[0])]["measurement_value"] = measurement_value
-                    dictParameters[name][remove_accents(la[0])]["unit_cost"] = float(la[1] + la[2])
+                    dictParameters[name][remove_accents(la[0])]["unit_cost"] = float(la[1] + la[2]) # Sum of costs (impl + (mant/periodicity) + oportunity)
                     
                 value = dictParameters[name]
 
@@ -688,6 +688,7 @@ def remove_accents(string):
 
 def execModel(args):
     # logger.debug("execModel :: args :: %s", args)
+    print(args)
     rios.execute(args)
 
 
