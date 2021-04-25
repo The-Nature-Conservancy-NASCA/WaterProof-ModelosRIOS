@@ -93,9 +93,9 @@ def execPreproc():
     isdir = os.path.isdir(process_path + 'in')
     if(not isdir):
         os.mkdir(process_path + 'in')
-
+    
     parameters, out_path = processParameters(
-        list_parameters, basin, process_path, id_usuario, listObjs, obj, outputPath, catchmentOut)
+        list_parameters, catchment,id_case,basin, process_path, id_usuario, listObjs, obj, outputPath, catchmentOut)
 
     # print(parameters)
 
@@ -196,6 +196,6 @@ def makeGetRequest(url, parameters, timeout, headers):
 
 if __name__ == '__main__':
     logger.debug("start debugging port :: 5678")
-    # debugpy.listen(5678)
+    #debugpy.listen(5678)
     ptvsd.enable_attach(address=('0.0.0.0', 5678), redirect_output=True)
     app.run(host='0.0.0.0', port=5050)

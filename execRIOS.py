@@ -9,7 +9,7 @@ import logging
 import sys, os, rasterio, fiona, ogr, osr, datetime
 from rasterio.mask import mask
 from zonalStatistics import calculateRainfallDayMonth,calculateStatistic
-from createBioParamCsv import getColsParams,generateCsv,readCsv,getDefaultBiophysicParams
+from createBioParamCsv import getColsParams,generateCsv,readCsv,getDefaultBiophysicParams,getUserBiophysicParams
 sys.path.append('config')
 from config import config
 from connect import connect
@@ -277,7 +277,7 @@ def getObjectives(ids):
 
 
 # Procesar parametros
-def processParameters(parametersList, basin, pathF, user, objectives, inputs_objs, outPreProc, catchment):
+def processParameters(parametersList, id_catchment,id_case,basin, pathF, user, objectives, inputs_objs, outPreProc, catchment):
 # def processParameters(parametersList, basin, catchment,pathF, user):
     dictParameters = dict()
     default='y'
@@ -377,7 +377,14 @@ def processParameters(parametersList, basin, pathF, user, objectives, inputs_obj
                     label = region[4]
                     file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
                     #values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
-                    values,headers=getDefaultBiophysicParams(user,label,default)
+                    values,headers=getDefaultBiophysicParams(label,default)
+                    valuesUser,headersUser=getUserBiophysicParams(id_catchment,id_case,user,label,'N')
+                    # Reemplazar los parametros del usuario 
+                    # en los parametros por defecto
+                    for userIdx,valUser in enumerate(valuesUser):
+                        for defIdx,defVal in enumerate(values):
+                            if (valUser[0]==defVal[0]):
+                                values[defIdx]=valUser
                     generateCsv(headers,values,file)
                     value = file
 
@@ -452,7 +459,14 @@ def processParameters(parametersList, basin, pathF, user, objectives, inputs_obj
                             
                             file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
                             #values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
-                            values,headers=getDefaultBiophysicParams(user,label,default)
+                            values,headers=getDefaultBiophysicParams(label,default)
+                            valuesUser,headersUser=getUserBiophysicParams(id_catchment,studyCase,user,label,'N')
+                            # Reemplazar los parametros del usuario 
+                            # en los parametros por defecto
+                            for userIdx,valUser in enumerate(valuesUser):
+                                for defIdx,defVal in enumerate(values):
+                                    if (valUser[0]==defVal[0]):
+                                        values[defIdx]=valUser
                             generateCsv(headers,values,file)
                             # value = file
                             dictParameters[name][obj[0]]["factors"][param[0]] = {}
@@ -512,7 +526,14 @@ def processParameters(parametersList, basin, pathF, user, objectives, inputs_obj
             label = region[4]
             file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
             #values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
-            values,headers=getDefaultBiophysicParams(user,label,default)
+            values,headers=getDefaultBiophysicParams(label,default)
+            valuesUser,headersUser=getUserBiophysicParams(id_catchment,studyCase,user,label,'N')
+            # Reemplazar los parametros del usuario 
+            # en los parametros por defecto
+            for userIdx,valUser in enumerate(valuesUser):
+                for defIdx,defVal in enumerate(values):
+                    if (valUser[0]==defVal[0]):
+                        values[defIdx]=valUser
             generateCsv(headers,values,file)
             value = file
 

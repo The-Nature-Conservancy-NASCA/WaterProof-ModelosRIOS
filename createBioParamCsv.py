@@ -16,7 +16,7 @@ def connectMongo(host,port):
 # Obtener parametros biofisicos por defecto filtrados por
 # macroregion 
 
-def getDefaultBiophysicParams(user,macro_region,default):
+def getDefaultBiophysicParams(macro_region,default):
     results = list()
     keys=list()
     cursor = connect('postgresql_alfa').cursor()

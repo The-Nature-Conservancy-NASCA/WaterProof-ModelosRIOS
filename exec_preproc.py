@@ -361,7 +361,7 @@ def processParameters(parametersList, basin,id_catchment, studyCase,catchment, p
                                 "biophysical_table.csv")
             # values, headers = getColsParams(
             #     "apps.skaphe.com", 27017, "waterProof", "parametros_biofisicos", user, label, True)
-            values,headers=getDefaultBiophysicParams(user,label,default)
+            values,headers=getDefaultBiophysicParams(label,default)
             valuesUser,headersUser=getUserBiophysicParams(id_catchment,studyCase,user,label,'N')
             # Reemplazar los parametros del usuario 
             # en los parametros por defecto
