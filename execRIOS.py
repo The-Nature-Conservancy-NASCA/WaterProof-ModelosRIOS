@@ -5,7 +5,7 @@
 # Date: 14/12/2020
 # Author: Diego Rodriguez - Skaphe Tecnologia SAS
 # WFApp
-
+import logging
 import sys, os, rasterio, fiona, ogr, osr, datetime
 from rasterio.mask import mask
 from zonalStatistics import calculateRainfallDayMonth,calculateStatistic
@@ -17,7 +17,8 @@ sys.path.append(os.path.split(os.getcwd())[0] + os.path.sep + 'RIOS_Toolbox')
 import RIOS_Toolbox.rios_preprocessor as Pro
 import RIOS_Toolbox.rios as rios
 import re
-
+logger = logging.getLogger('execRios')
+logger.setLevel(logging.DEBUG)
 # Correspondencia/homologacion entre objetivos de rios_preprocessor y rios
 objectives_mapping = {
     'erosion_drinking_control': 'do_erosion',
@@ -131,15 +132,16 @@ def resamplingRaster(templatePath,srcPath,out):
 
 # Obtener parametros de modelo
 def getParameters(basin,model):
-	result = ''
-	listResult = []
-	cursor = connect('postgresql_alfa').cursor()
-	cursor.callproc('getparametersmodel',[basin,model])
-	result = cursor.fetchall()
-	for row in result:
-		listResult.append(row)
-	cursor.close()
-	return listResult
+    logger.debug("getParameters")
+    result = ''
+    listResult = []
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('getparametersmodel',[basin,model])
+    result = cursor.fetchall()
+    for row in result:
+        listResult.append(row)
+    cursor.close()
+    return listResult
 
 # Recuperar macroregion por id
 def getRegionFromId(basin):
@@ -327,7 +329,7 @@ def processParameters(parametersList, basin, pathF, user, objectives, inputs_obj
                     dictParameters[name][remove_accents(la[0])] = {}
                     dictParameters[name][remove_accents(la[0])]["measurement_unit"] = measurement_unit
                     dictParameters[name][remove_accents(la[0])]["measurement_value"] = measurement_value
-                    dictParameters[name][remove_accents(la[0])]["unit_cost"] = float(la[1] + la[2])
+                    dictParameters[name][remove_accents(la[0])]["unit_cost"] = float(la[1] + la[2]) # Sum of costs (impl + (mant/periodicity) + oportunity)
                     
                 value = dictParameters[name]
 
@@ -407,16 +409,16 @@ def processParameters(parametersList, basin, pathF, user, objectives, inputs_obj
 
             elif(riosType == "budget_conf"):
                 dictParameters[name] = {}
-                dictParameters[name]["years_to_spend"] = 10
+                dictParameters[name]["years_to_spend"] = 30  # Parametro a sustituir por el numero de años
                 dictParameters[name]["activity_budget"] = {}
                 listAct = getActivities(user)
                 # print(listAct) 
                 for la in listAct:
                     dictParameters[name]["activity_budget"][remove_accents(la[0])] = {}
-                    dictParameters[name]["activity_budget"][remove_accents(la[0])]["budget_amount"] = 10000
+                    dictParameters[name]["activity_budget"][remove_accents(la[0])]["budget_amount"] = 10000 # sustituir
 
                 dictParameters[name]["if_left_over"] = "Report remainder"
-                dictParameters[name]["floating_budget"] = 999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
+                dictParameters[name]["floating_budget"] = 999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999  # Sustituir
 
                 value = dictParameters[name]
 
@@ -685,7 +687,8 @@ def remove_accents(string):
     return string
 
 def execModel(args):
-    # print(args)
+    # logger.debug("execModel :: args :: %s", args)
+    print(args)
     rios.execute(args)
 
 
