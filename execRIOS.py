@@ -31,7 +31,7 @@ objectives_mapping = {
 }
 
 # Exportar poligonos de actividades a shapefile
-def exportToShpActivities(path, user):
+def exportToShpActivities(nbsList,path, user):
 	params = config(section='postgresql_alfa')
 	connString = "PG: host=" + params['host'] + " dbname=" + params['database'] + " user=" + params['user'] + " password=" + params['password'] 
 	conn=ogr.Open(connString)
@@ -75,7 +75,7 @@ def exportToShpActivities(path, user):
 	sql = ("select shp.id,nbs.name,shp.action,shp.area"
             " from waterproof_nbs_ca_waterproofnbsca nbs"
             " join waterproof_nbs_ca_activityshapefile shp on nbs.activity_shapefile_id = shp.id"
-            " where nbs.added_by_id = " +  str(user) + ";")
+            " where nbs.id=ANY(ARRAY[13,14,15]);")
 
 	print(sql)
 
@@ -216,11 +216,11 @@ def cutRaster(catchment,path,out_path):
 
 	return os.path.join(out_path,os.path.basename(path))
 
-def getActivities(user_id):
+def getActivities(nbsList,user_id):
     result = ''
     listResult = []
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('getactivities',[user_id])
+    cursor.callproc('get_activities',[nbsList])
     result = cursor.fetchall()
     for row in result:
         # print(row)
@@ -250,11 +250,11 @@ def getParametersByObj(id_obj, id_basin):
     cursor.close()
     return listResult
 
-def getActivityShapefile(user_id):
+def getActivityShapefile(nbsList):
     result = ''
     listResult = []
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('getactivityshp',[user_id])
+    cursor.callproc('get_activities_shapefiles',[nbsList])
     result = cursor.fetchall()
     for row in result:
         # print(row)
@@ -277,7 +277,7 @@ def getObjectives(ids):
 
 
 # Procesar parametros
-def processParameters(parametersList, id_catchment,id_case,basin, pathF, user, objectives, inputs_objs, outPreProc, catchment):
+def processParameters(nbsList,parametersList, id_catchment,id_case,basin, pathF, user, objectives, inputs_objs, outPreProc, catchment):
 # def processParameters(parametersList, basin, catchment,pathF, user):
     dictParameters = dict()
     default='y'
@@ -323,7 +323,7 @@ def processParameters(parametersList, id_catchment,id_case,basin, pathF, user, o
             # print(riosType)
             if(riosType == 'activities'):
                 dictParameters[name] = {}
-                listAct = getActivities(user)
+                listAct = getActivities(nbsList,user)
                 # print(listAct) 
                 for la in listAct:
                     dictParameters[name][remove_accents(la[0])] = {}
@@ -350,8 +350,8 @@ def processParameters(parametersList, id_catchment,id_case,basin, pathF, user, o
             elif(riosType == 'shp_act'):
                 dictParameters[name] = []
                 listAct = []
-                listPolygons = getActivityShapefile(user)
-                outShp = exportToShpActivities(in_path, user)
+                listPolygons = getActivityShapefile(nbsList)
+                outShp = exportToShpActivities(nbsList,in_path, user)
                 listAct.append(outShp)           
                 value = listAct  
 
@@ -360,7 +360,7 @@ def processParameters(parametersList, id_catchment,id_case,basin, pathF, user, o
                 transitionsList = getTransitions()
                 for transition in transitionsList:
                     dictParameters[name][transition[1]] = {}
-                    listActivities = getActivities(user)
+                    listActivities = getActivities(nbsList,user)
                     for activity in listActivities:
                         dictParameters[name][transition[1]][remove_accents(activity[0])] = 0
                 value = dictParameters[name]
@@ -369,7 +369,7 @@ def processParameters(parametersList, id_catchment,id_case,basin, pathF, user, o
                 key_lulc = "lulc_coefficients_table_uri"
                 dictParameters[name] = {}
                 file = ""
-                listActivities_1 = getActivities(user)
+                listActivities_1 = getActivities(nbsList,user)
                 
                 if(key_lulc not in dictParameters):
                     # print("no existe no")
@@ -418,7 +418,7 @@ def processParameters(parametersList, id_catchment,id_case,basin, pathF, user, o
                 dictParameters[name] = {}
                 dictParameters[name]["years_to_spend"] = 30  # Parametro a sustituir por el numero de años
                 dictParameters[name]["activity_budget"] = {}
-                listAct = getActivities(user)
+                listAct = getActivities(nbsList,user)
                 # print(listAct) 
                 for la in listAct:
                     dictParameters[name]["activity_budget"][remove_accents(la[0])] = {}
@@ -460,7 +460,7 @@ def processParameters(parametersList, id_catchment,id_case,basin, pathF, user, o
                             file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
                             #values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
                             values,headers=getDefaultBiophysicParams(label,default)
-                            valuesUser,headersUser=getUserBiophysicParams(id_catchment,studyCase,user,label,'N')
+                            valuesUser,headersUser=getUserBiophysicParams(id_catchment,id_case,user,label,'N')
                             # Reemplazar los parametros del usuario 
                             # en los parametros por defecto
                             for userIdx,valUser in enumerate(valuesUser):
@@ -527,7 +527,7 @@ def processParameters(parametersList, id_catchment,id_case,basin, pathF, user, o
             file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
             #values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
             values,headers=getDefaultBiophysicParams(label,default)
-            valuesUser,headersUser=getUserBiophysicParams(id_catchment,studyCase,user,label,'N')
+            valuesUser,headersUser=getUserBiophysicParams(id_catchment,id_case,user,label,'N')
             # Reemplazar los parametros del usuario 
             # en los parametros por defecto
             for userIdx,valUser in enumerate(valuesUser):
