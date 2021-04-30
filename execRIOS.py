@@ -9,7 +9,7 @@ import logging
 import sys, os, rasterio, fiona, ogr, osr, datetime
 from rasterio.mask import mask
 from zonalStatistics import calculateRainfallDayMonth,calculateStatistic
-from createBioParamCsv import getColsParams,generateCsv,readCsv,getDefaultBiophysicParams,getUserBiophysicParams
+from createBioParamCsv import getColsParams,generateCsv,readCsv,getDefaultBiophysicParams,getUserBiophysicParams,filterCsvLucode
 sys.path.append('config')
 from config import config
 from connect import connect
@@ -31,77 +31,107 @@ objectives_mapping = {
 }
 
 # Exportar poligonos de actividades a shapefile
-def exportToShpActivities(path, user):
-	params = config(section='postgresql_alfa')
-	connString = "PG: host=" + params['host'] + " dbname=" + params['database'] + " user=" + params['user'] + " password=" + params['password'] 
-	conn=ogr.Open(connString)
-	if conn is None:
-		print('Could not open a database or GDAL is not correctly installed!')
-		sys.exit(1)
-
-	output = os.path.join(path,"activities_shp")
-	print(output)
-	source = osr.SpatialReference()
-	source.ImportFromEPSG(4326)
-	target = osr.SpatialReference()
-	target.ImportFromEPSG(3857)
-	transform = osr.CoordinateTransformation(source, target)
-
-	# Schema definition of SHP file
-	out_driver = ogr.GetDriverByName( 'ESRI Shapefile' )
-	if os.path.exists(output):
-		out_driver.DeleteDataSource(output)
-
-	out_ds = out_driver.CreateDataSource(output)
-
-	
-
-	out_layer = out_ds.CreateLayer("activities", target, ogr.wkbMultiPolygon)
-	fd_activity = ogr.FieldDefn('activity_n',ogr.OFTString)
-	fd_action = ogr.FieldDefn('action',ogr.OFTString)
-	out_layer.CreateField(fd_activity)
-	out_layer.CreateField(fd_action)
-	# if(len(catchment) == 1):
-	# 	params = ' = ' + str(catchment[0]) 
-	# elif(len(catchment) > 1):
-	# 	params = ' IN ('
-	# 	for c in catchment:
-	# 		params = params + str(c) + ','
-	# 	params = params[:-1] + ')'
 
 
+def exportToShpActivities(nbsList, path, user):
+    params = config(section='postgresql_alfa')
+    connString = "PG: host=" + params['host'] + " dbname=" + params['database'] + \
+        " user=" + params['user'] + " password=" + params['password']
+    conn = ogr.Open(connString)
+    if conn is None:
+        print('Could not open a database or GDAL is not correctly installed!')
+        sys.exit(1)
 
-	# sql = "select getactivityshp(" +  str(user) + ")"
-	sql = ("select shp.id,nbs.name,shp.action,shp.area"
-            " from waterproof_nbs_ca_waterproofnbsca nbs"
-            " join waterproof_nbs_ca_activityshapefile shp on nbs.activity_shapefile_id = shp.id"
-            " where nbs.added_by_id = " +  str(user) + ";")
+    # output = os.path.join(path, "activities_shp")
+    # print(output)
+    # source = osr.SpatialReference()
+    # source.ImportFromEPSG(4326)
+    # target = osr.SpatialReference()
+    # target.ImportFromEPSG(3857)
+    # transform = osr.CoordinateTransformation(source, target)
 
-	print(sql)
+    # # Schema definition of SHP file
+    # out_driver = ogr.GetDriverByName('ESRI Shapefile')
+    # if os.path.exists(output):
+    #     out_driver.DeleteDataSource(output)
 
-    # layer = conn.GetLayerByName("delineated_catchment")
-	layer = conn.ExecuteSQL(sql)
-    
-	feat = layer.GetNextFeature()
-	while feat is not None:
-		# print(feat)
-		featDef = ogr.Feature(out_layer.GetLayerDefn())
-		geom = feat.GetGeometryRef()
-		geom.Transform(transform)		
-		featDef.SetGeometry(geom)			
-		featDef.SetField('activity_n',remove_accents(feat.name))		
-		featDef.SetField('action',feat.action)		
-		out_layer.CreateFeature(featDef)
-		feat.Destroy()
-		feat = layer.GetNextFeature()
-        
+    # out_ds = out_driver.CreateDataSource(output)
 
-	conn.Destroy()
-	out_ds.Destroy()
-		
-	return output
+    # out_layer = out_ds.CreateLayer("activities", target, ogr.wkbMultiPolygon)
+    # fd_activity = ogr.FieldDefn('activity_n', ogr.OFTString)
+    # fd_action = ogr.FieldDefn('action', ogr.OFTString)
+    # out_layer.CreateField(fd_activity)
+    # out_layer.CreateField(fd_action)
+    # if(len(catchment) == 1):
+    # 	params = ' = ' + str(catchment[0])
+    # elif(len(catchment) > 1):
+    # 	params = ' IN ('
+    # 	for c in catchment:
+    # 		params = params + str(c) + ','
+    # 	params = params[:-1] + ')'
 
-def resamplingRaster(templatePath,srcPath,out):
+    # sql = "select getactivityshp(" +  str(user) + ")"
+    sqlParam='ARRAY['
+    for idx,nbs in enumerate(nbsList):
+        if (idx<len(nbsList)-1):
+            sqlParam=sqlParam+str(nbs[0])+","
+        else:
+             sqlParam=sqlParam+str(nbs[0])+"]"
+        print(sqlParam)
+
+    sql = ("select shp.id,nbs.name,shp.action,shp.area"
+           " from waterproof_nbs_ca_waterproofnbsca nbs"
+           " join waterproof_nbs_ca_activityshapefile shp on nbs.activity_shapefile_id = shp.id"
+           " where nbs.id=ANY("+sqlParam+");")
+
+    print(sql)
+
+# layer = conn.GetLayerByName("delineated_catchment")
+    layer = conn.ExecuteSQL(sql)
+
+    feat = layer.GetNextFeature()
+    n=0
+    outputList=[]
+    while feat is not None:
+        output = os.path.join(path, "activity_"+feat.name+"_shp")
+        print(output)
+        source = osr.SpatialReference()
+        source.ImportFromEPSG(4326)
+        target = osr.SpatialReference()
+        target.ImportFromEPSG(3857)
+        transform = osr.CoordinateTransformation(source, target)
+        # Schema definition of SHP file
+        out_driver = ogr.GetDriverByName('ESRI Shapefile')
+        if os.path.exists(output):
+            out_driver.DeleteDataSource(output)
+
+        out_ds = out_driver.CreateDataSource(output)
+
+        out_layer = out_ds.CreateLayer("activities", target, ogr.wkbMultiPolygon)
+        fd_activity = ogr.FieldDefn('activity_n', ogr.OFTString)
+        fd_action = ogr.FieldDefn('action', ogr.OFTString)
+        out_layer.CreateField(fd_activity)
+        out_layer.CreateField(fd_action)
+        # print(feat)
+        featDef = ogr.Feature(out_layer.GetLayerDefn())
+        geom = feat.GetGeometryRef()
+        geom.Transform(transform)
+        featDef.SetGeometry(geom)
+        featDef.SetField('activity_n', remove_accents(feat.name))
+        featDef.SetField('action', feat.action)
+        out_layer.CreateFeature(featDef)
+        feat.Destroy()
+        feat = layer.GetNextFeature()
+        outputList.append(output)
+        n=n+1
+
+    conn.Destroy()
+    out_ds.Destroy()
+
+    return outputList
+
+
+def resamplingRaster(templatePath, srcPath, out):
 
     # Source
     src = gdal.Open(srcPath, gdalconst.GA_ReadOnly)
@@ -117,26 +147,27 @@ def resamplingRaster(templatePath,srcPath,out):
     high = match_ds.RasterYSize
 
     # Output / destination
-    dst = gdal.GetDriverByName('Gtiff').Create(out, wide, high, 1, gdalconst.GDT_Float32)
-    dst.SetGeoTransform( match_geotrans )
-    dst.SetProjection( match_proj)
+    dst = gdal.GetDriverByName('Gtiff').Create(
+        out, wide, high, 1, gdalconst.GDT_Float32)
+    dst.SetGeoTransform(match_geotrans)
+    dst.SetProjection(match_proj)
 
     # Do the work
-    gdal.ReprojectImage(src, dst, src_proj, match_proj, gdalconst.GRA_NearestNeighbour)
+    gdal.ReprojectImage(src, dst, src_proj, match_proj,
+                        gdalconst.GRA_NearestNeighbour)
 
-    del dst # Flush
+    del dst  # Flush
 
-    print ("finish")
-
+    print("finish")
 
 
 # Obtener parametros de modelo
-def getParameters(basin,model):
+def getParameters(basin, model):
     logger.debug("getParameters")
     result = ''
     listResult = []
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('getparametersmodel',[basin,model])
+    cursor.callproc('getparametersmodel', [basin, model])
     result = cursor.fetchall()
     for row in result:
         listResult.append(row)
@@ -144,117 +175,147 @@ def getParameters(basin,model):
     return listResult
 
 # Recuperar macroregion por id
+
+
 def getRegionFromId(basin):
-	result = ''
-	cursor = connect('postgresql_alfa').cursor()
-	cursor.callproc('getBasin',[basin])
-	result = cursor.fetchall()
-	for row in result:
-		result = row
-	cursor.close()
-	return result
+    result = ''
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('getBasin', [basin])
+    result = cursor.fetchall()
+    for row in result:
+        result = row
+    cursor.close()
+    return result
 
 # Recuperar constante por macroregion
-def getConstantFromBasin(basin,constantName):
-	result = ''
-	cursor = connect('postgresql_alfa').cursor()
-	cursor.callproc('getconstant',[basin,constantName])
-	result = cursor.fetchall()
-	for row in result:
-		result = row
-	cursor.close()
-	return result
+
+
+def getConstantFromBasin(basin, constantName):
+    result = ''
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('getconstant', [basin, constantName])
+    result = cursor.fetchall()
+    for row in result:
+        result = row
+    cursor.close()
+    return result
 
 # Cortar raster
-def cutRaster(catchment,path,out_path):
-	data = rasterio.open(path)
-	with fiona.open(catchment, "r") as shapefile:
-		shapes = [feature["geometry"] for feature in shapefile]
-	
-	with rasterio.open(path) as src:
-		#if 'Stream' in path or 'Soil_Depth' in path:
-		#	nd = 255
-		#else:
-		#	nd = -999
-
-		out_image, out_transform = mask(src, shapes, crop=True)
-		out_meta = src.meta
-
-        print(path)
-
-        out_meta.update({"driver": "GTiff",
-                        "height": out_image.shape[1],
-                        "width": out_image.shape[2],
-                        "transform": out_transform})
 
 
+def cutRaster(catchment, path, out_path):
+    data = rasterio.open(path)
+    with fiona.open(catchment, "r") as shapefile:
+        shapes = [feature["geometry"] for feature in shapefile]
 
-        # if "RainfallDay" not in path:
-        #     out_meta.update({"driver": "GTiff",
-        #             "height": out_image.shape[1],
-        #             "width": out_image.shape[2],
-        #             "transform": out_transform,
-        #             "nodata":-9999})
+    with rasterio.open(path) as src:
+        # if 'Stream' in path or 'Soil_Depth' in path:
+        #	nd = 255
+        # else:
+        #	nd = -999
 
-        # if "Stream" in path:
-        #     out_meta.update({"driver": "GTiff",
-        #         "height": out_image.shape[1],
-        #         "width": out_image.shape[2],
-        #         "transform": out_transform,
-        #         "nodata":-9999})
-        # else:  
-        #     out_meta.update({"driver": "GTiff",
-        #     "height": out_image.shape[1],
-        #     "width": out_image.shape[2],
-        #     "transform": out_transform})
-	
+        out_image, out_transform = mask(src, shapes, crop=True)
+        out_meta = src.meta
 
-    
-	
-	with rasterio.open(os.path.join(out_path,os.path.basename(path)), "w", **out_meta) as dest:
-		dest.write(out_image)
+    print(path)
 
-	return os.path.join(out_path,os.path.basename(path))
+    out_meta.update({"driver": "GTiff",
+                     "height": out_image.shape[1],
+                     "width": out_image.shape[2],
+                     "transform": out_transform})
 
-def getActivities(user_id):
+    # if "RainfallDay" not in path:
+    #     out_meta.update({"driver": "GTiff",
+    #             "height": out_image.shape[1],
+    #             "width": out_image.shape[2],
+    #             "transform": out_transform,
+    #             "nodata":-9999})
+
+    # if "Stream" in path:
+    #     out_meta.update({"driver": "GTiff",
+    #         "height": out_image.shape[1],
+    #         "width": out_image.shape[2],
+    #         "transform": out_transform,
+    #         "nodata":-9999})
+    # else:
+    #     out_meta.update({"driver": "GTiff",
+    #     "height": out_image.shape[1],
+    #     "width": out_image.shape[2],
+    #     "transform": out_transform})
+
+    with rasterio.open(os.path.join(out_path, os.path.basename(path)), "w", **out_meta) as dest:
+        dest.write(out_image)
+
+    return os.path.join(out_path, os.path.basename(path))
+
+
+def getActivities(nbsList, user_id):
     result = ''
     listResult = []
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('getactivities',[user_id])
+    cursor.callproc('get_activities', [nbsList])
     result = cursor.fetchall()
     for row in result:
         # print(row)
         listResult.append(row)
     cursor.close()
     return listResult
+
+def checkNbsTransitionMap(idNbs,id_transition):
+    result = ''
+    listResult = []
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('check_nbs_transition_map', [idNbs,id_transition])
+    result = cursor.fetchall()
+    if (len(result)>0):
+        cursor.close()
+        return True
+    else:
+        return False
+
+
+def getNbsTransformations(nbsList):
+    result = ''
+    listResult = []
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('get_nbs_transformations', [nbsList])
+    result = cursor.fetchall()
+    for row in result:
+        # print(row)
+        listResult.append(row)
+    cursor.close()
+    return listResult
+
 
 def getTransitions():
     result = ''
     listResult = []
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('gettransitions',[])
+    cursor.callproc('gettransitions', [])
     result = cursor.fetchall()
     for row in result:
         listResult.append(row)
     cursor.close()
     return listResult
+
 
 def getParametersByObj(id_obj, id_basin):
     result = ''
     listResult = []
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('getparametersbyobj',[id_basin,id_obj])
+    cursor.callproc('getparametersbyobj', [id_basin, id_obj])
     result = cursor.fetchall()
     for row in result:
         listResult.append(row)
     cursor.close()
     return listResult
 
-def getActivityShapefile(user_id):
+
+def getActivityShapefile(nbsList):
     result = ''
     listResult = []
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('getactivityshp',[user_id])
+    cursor.callproc('get_activities_shapefiles', [nbsList])
     result = cursor.fetchall()
     for row in result:
         # print(row)
@@ -262,31 +323,31 @@ def getActivityShapefile(user_id):
     cursor.close()
     return listResult
 
+
 def getObjectives(ids):
     listResult = []
     for id in ids:
         cursor = connect('postgresql_alfa').cursor()
-        cursor.callproc('getobjectives',[id])
+        cursor.callproc('getobjectives', [id])
         result = cursor.fetchall()
         for row in result:
             listResult.append(row)
         cursor.close()
-    
+
     return listResult
 
 
-
 # Procesar parametros
-def processParameters(parametersList, id_catchment,id_case,basin, pathF, user, objectives, inputs_objs, outPreProc, catchment):
-# def processParameters(parametersList, basin, catchment,pathF, user):
+def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pathF, user, objectives, inputs_objs, outPreProc, catchment):
+    # def processParameters(parametersList, basin, catchment,pathF, user):
     dictParameters = dict()
-    default='y'
+    default = 'y'
     out_path = ""
     in_path = ""
     out_folder = parametersList[0][9]
-    out_path = os.path.join(os.getcwd(),pathF,'out',out_folder)
-    in_path = os.path.join(os.getcwd(),pathF,'in',out_folder)
-	
+    out_path = os.path.join(os.getcwd(), pathF, 'out', out_folder)
+    in_path = os.path.join(os.getcwd(), pathF, 'in', out_folder)
+
     measurement_value = 10000
     measurement_unit = "area"
 
@@ -323,14 +384,17 @@ def processParameters(parametersList, id_catchment,id_case,basin, pathF, user, o
             # print(riosType)
             if(riosType == 'activities'):
                 dictParameters[name] = {}
-                listAct = getActivities(user)
-                # print(listAct) 
+                listAct = getActivities(nbsList, user)
+                # print(listAct)
                 for la in listAct:
                     dictParameters[name][remove_accents(la[0])] = {}
-                    dictParameters[name][remove_accents(la[0])]["measurement_unit"] = measurement_unit
-                    dictParameters[name][remove_accents(la[0])]["measurement_value"] = measurement_value
-                    dictParameters[name][remove_accents(la[0])]["unit_cost"] = float(la[1] + la[2]) # Sum of costs (impl + (mant/periodicity) + oportunity)
-                    
+                    dictParameters[name][remove_accents(
+                        la[0])]["measurement_unit"] = measurement_unit
+                    dictParameters[name][remove_accents(
+                        la[0])]["measurement_value"] = measurement_value
+                    dictParameters[name][remove_accents(la[0])]["unit_cost"] = float(
+                        la[1] + la[2])  # Sum of costs (impl + (mant/periodicity) + oportunity)
+
                 value = dictParameters[name]
 
             elif(riosType == 'transition_default'):
@@ -346,59 +410,74 @@ def processParameters(parametersList, id_catchment,id_case,basin, pathF, user, o
                     dictParameters[name].append(dictTran)
 
                 value = dictParameters[name]
-            
+
             elif(riosType == 'shp_act'):
                 dictParameters[name] = []
                 listAct = []
-                listPolygons = getActivityShapefile(user)
-                outShp = exportToShpActivities(in_path, user)
-                listAct.append(outShp)           
-                value = listAct  
+                listPolygons = getActivityShapefile(nbsList)
+                outShp = exportToShpActivities(nbsList, in_path, user)
+                # listAct.append(outShp)
+                #value = listAct
+                value = outShp
+#
 
             elif(riosType == 'transition_map'):
                 dictParameters[name] = {}
                 transitionsList = getTransitions()
                 for transition in transitionsList:
                     dictParameters[name][transition[1]] = {}
-                    listActivities = getActivities(user)
+                    listActivities = getActivities(nbsList, user)
                     for activity in listActivities:
-                        dictParameters[name][transition[1]][remove_accents(activity[0])] = 0
+                        idNbs=activity[3]
+                        transition_map=checkNbsTransitionMap(idNbs,transition[3])
+                        if (transition_map):
+                            dictParameters[name][transition[1]
+                                                ][remove_accents(activity[0])] = 1
+                        else:
+                            dictParameters[name][transition[1]
+                                                ][remove_accents(activity[0])] = 0
                 value = dictParameters[name]
-            
+
             elif(riosType == 'lulc_act'):
                 key_lulc = "lulc_coefficients_table_uri"
                 dictParameters[name] = {}
                 file = ""
-                listActivities_1 = getActivities(user)
-                
+                listActivities_1 = getActivities(nbsList, user)
+                transformations = getNbsTransformations(nbsList)
+
                 if(key_lulc not in dictParameters):
                     # print("no existe no")
                     region = getRegionFromId(basin)
                     label = region[4]
-                    file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
+                    file = os.path.join(os.getcwd(), pathF,
+                                        'in', "biophysical_table.csv")
                     #values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
-                    values,headers=getDefaultBiophysicParams(label,default)
-                    valuesUser,headersUser=getUserBiophysicParams(id_catchment,id_case,user,label,'N')
-                    # Reemplazar los parametros del usuario 
+                    values, headers = getDefaultBiophysicParams(label, default)
+                    valuesUser, headersUser = getUserBiophysicParams(
+                        id_catchment, id_case, user, label, 'N')
+                    # Reemplazar los parametros del usuario
                     # en los parametros por defecto
-                    for userIdx,valUser in enumerate(valuesUser):
-                        for defIdx,defVal in enumerate(values):
-                            if (valUser[0]==defVal[0]):
-                                values[defIdx]=valUser
-                    generateCsv(headers,values,file)
+                    for userIdx, valUser in enumerate(valuesUser):
+                        for defIdx, defVal in enumerate(values):
+                            if (valUser[0] == defVal[0]):
+                                values[defIdx] = valUser
+                    generateCsv(headers, values, file)
                     value = file
 
-                listCsv = readCsv(file,"lucode")
+                listCsv = filterCsvLucode(file, "lucode")
+
                 for lulc in listCsv:
                     dictParameters[name][lulc] = []
-                    list_la = []
+                    for trans in transformations:
+                        if (lulc == str(trans[0])):
+                            list_la = []
+                            list_la.append(remove_accents(trans[3]))
+                            dictParameters[name][lulc] = list_la
                     # print(listActivities_1)
-                    for act in listActivities_1:     
-                                          
-                        list_la.append(remove_accents(act[0]))
-                
+                    # for act in listActivities_1:
+                    #     list_la.append(remove_accents(act[0]))
+
                     # print(list_la)
-                    dictParameters[name][lulc] = list_la
 
                 value = dictParameters[name]
 
@@ -416,16 +495,20 @@ def processParameters(parametersList, id_catchment,id_case,basin, pathF, user, o
 
             elif(riosType == "budget_conf"):
                 dictParameters[name] = {}
-                dictParameters[name]["years_to_spend"] = 30  # Parametro a sustituir por el numero de años
+                # Parametro a sustituir por el numero de años
+                dictParameters[name]["years_to_spend"] = 30
                 dictParameters[name]["activity_budget"] = {}
-                listAct = getActivities(user)
-                # print(listAct) 
+                listAct = getActivities(nbsList, user)
+                # print(listAct)
                 for la in listAct:
-                    dictParameters[name]["activity_budget"][remove_accents(la[0])] = {}
-                    dictParameters[name]["activity_budget"][remove_accents(la[0])]["budget_amount"] = 10000 # sustituir
+                    dictParameters[name]["activity_budget"][remove_accents(la[0])] = {
+                    }
+                    dictParameters[name]["activity_budget"][remove_accents(
+                        la[0])]["budget_amount"] = 10000  # sustituir
 
                 dictParameters[name]["if_left_over"] = "Report remainder"
-                dictParameters[name]["floating_budget"] = 999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999  # Sustituir
+                # Sustituir
+                dictParameters[name]["floating_budget"] = 999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
 
                 value = dictParameters[name]
 
@@ -434,73 +517,91 @@ def processParameters(parametersList, id_catchment,id_case,basin, pathF, user, o
                 listObjectives = getObjectives(objectives)
                 for obj in listObjectives:
                     dictParameters[name][obj[0]] = {}
-                    dictParameters[name][obj[0]]["rios_model_type"] = "rios_tier_0"
+                    dictParameters[name][obj[0]
+                                         ]["rios_model_type"] = "rios_tier_0"
                     dictParameters[name][obj[0]]["priorities"] = {}
                     transitionsList = getTransitions()
                     listParametersObj = getParametersByObj(obj[1], basin)
                     for transition in transitionsList:
-                        dictParameters[name][obj[0]]["priorities"][transition[1]] = {}
+                        dictParameters[name][obj[0]
+                                             ]["priorities"][transition[1]] = {}
                         for param in listParametersObj:
-                            dictParameters[name][obj[0]]["priorities"][transition[1]][param[0]] = 0
+                            dictParameters[name][obj[0]
+                                                 ]["priorities"][transition[1]][param[0]] = 0
 
                     dictParameters[name][obj[0]]["factors"] = {}
 
                     for param in listParametersObj:
                         region = getRegionFromId(basin)
                         label = region[4]
-                        if(param[0] == 'Vegetative Cover Index' or param[0] == 'Land Use Land Cover Retention at pixel' 
-                        or param[0] == 'On-pixel retention' or param[0] == 'On-pixel source'):
+                        if(param[0] == 'Vegetative Cover Index' or param[0] == 'Land Use Land Cover Retention at pixel'
+                           or param[0] == 'On-pixel retention' or param[0] == 'On-pixel source'):
                             ranks = {
                                 'Vegetative Cover Index': 'Cover_Rank',
-                                'Land Use Land Cover Retention at pixel':'Rough_Rank',
-                                'On-pixel retention':'Sed_Ret',
+                                'Land Use Land Cover Retention at pixel': 'Rough_Rank',
+                                'On-pixel retention': 'Sed_Ret',
                                 'On-pixel source': 'Sed_Exp'
                             }
-                            
-                            file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
-                            #values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
-                            values,headers=getDefaultBiophysicParams(label,default)
-                            valuesUser,headersUser=getUserBiophysicParams(id_catchment,studyCase,user,label,'N')
-                            # Reemplazar los parametros del usuario 
-                            # en los parametros por defecto
-                            for userIdx,valUser in enumerate(valuesUser):
-                                for defIdx,defVal in enumerate(values):
-                                    if (valUser[0]==defVal[0]):
-                                        values[defIdx]=valUser
-                            generateCsv(headers,values,file)
-                            # value = file
-                            dictParameters[name][obj[0]]["factors"][param[0]] = {}
-                            dictParameters[name][obj[0]]["factors"][param[0]]["bins"] = {}
-                            dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["key_field"] = 'lulc_general'
-                            dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["raster_uri"] = param[2]
-                            dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["uri"] = file
-                            dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["value_field"] = ranks[param[0]]
-                        else:
-                            
-                            if inputs_objs[objectives_mapping[obj[0]]].has_key(param[0]):
-                                dictParameters[name][obj[0]]["factors"][param[0]] = {}
-                                dictParameters[name][obj[0]]["factors"][param[0]]["raster_uri"] = os.path.join(outPreProc,inputs_objs[objectives_mapping[obj[0]]][param[0]].format(label))
-                                dictParameters[name][obj[0]]["factors"][param[0]]["bins"] = {}
-                                dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["inverted"] = False
-                                dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["type"] = "interpolated"
-                                dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["interpolation"] = "linear"
-                            else:
-                            # print(objectives_mapping[obj[0]])
-                            # print(inputs_objs)
-                                dictParameters[name][obj[0]]["factors"][param[0]] = {}
-                                dictParameters[name][obj[0]]["factors"][param[0]]["raster_uri"] = param[2]
-                                dictParameters[name][obj[0]]["factors"][param[0]]["bins"] = {}
-                                dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["inverted"] = False
-                                dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["type"] = "interpolated"
-                                dictParameters[name][obj[0]]["factors"][param[0]]["bins"]["interpolation"] = "linear"
 
+                            file = os.path.join(
+                                os.getcwd(), pathF, 'in', "biophysical_table.csv")
+                            #values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
+                            values, headers = getDefaultBiophysicParams(
+                                label, default)
+                            valuesUser, headersUser = getUserBiophysicParams(
+                                id_catchment, id_case, user, label, 'N')
+                            # Reemplazar los parametros del usuario
+                            # en los parametros por defecto
+                            for userIdx, valUser in enumerate(valuesUser):
+                                for defIdx, defVal in enumerate(values):
+                                    if (valUser[0] == defVal[0]):
+                                        values[defIdx] = valUser
+                            generateCsv(headers, values, file)
+                            # value = file
+                            dictParameters[name][obj[0]
+                                                 ]["factors"][param[0]] = {}
+                            dictParameters[name][obj[0]
+                                                 ]["factors"][param[0]]["bins"] = {}
+                            dictParameters[name][obj[0]]["factors"][param[0]
+                                                                    ]["bins"]["key_field"] = 'lulc_general'
+                            dictParameters[name][obj[0]]["factors"][param[0]
+                                                                    ]["bins"]["raster_uri"] = param[2]
+                            dictParameters[name][obj[0]
+                                                 ]["factors"][param[0]]["bins"]["uri"] = file
+                            dictParameters[name][obj[0]]["factors"][param[0]
+                                                                    ]["bins"]["value_field"] = ranks[param[0]]
+                        else:
+
+                            if inputs_objs[objectives_mapping[obj[0]]].has_key(param[0]):
+                                dictParameters[name][obj[0]
+                                                     ]["factors"][param[0]] = {}
+                                dictParameters[name][obj[0]]["factors"][param[0]]["raster_uri"] = os.path.join(
+                                    outPreProc, inputs_objs[objectives_mapping[obj[0]]][param[0]].format(label))
+                                dictParameters[name][obj[0]
+                                                     ]["factors"][param[0]]["bins"] = {}
+                                dictParameters[name][obj[0]]["factors"][param[0]
+                                                                        ]["bins"]["inverted"] = False
+                                dictParameters[name][obj[0]]["factors"][param[0]
+                                                                        ]["bins"]["type"] = "interpolated"
+                                dictParameters[name][obj[0]]["factors"][param[0]
+                                                                        ]["bins"]["interpolation"] = "linear"
+                            else:
+                                # print(objectives_mapping[obj[0]])
+                                # print(inputs_objs)
+                                dictParameters[name][obj[0]
+                                                     ]["factors"][param[0]] = {}
+                                dictParameters[name][obj[0]]["factors"][param[0]
+                                                                        ]["raster_uri"] = param[2]
+                                dictParameters[name][obj[0]
+                                                     ]["factors"][param[0]]["bins"] = {}
+                                dictParameters[name][obj[0]]["factors"][param[0]
+                                                                        ]["bins"]["inverted"] = False
+                                dictParameters[name][obj[0]]["factors"][param[0]
+                                                                        ]["bins"]["type"] = "interpolated"
+                                dictParameters[name][obj[0]]["factors"][param[0]
+                                                                        ]["bins"]["interpolation"] = "linear"
 
                 value = dictParameters[name]
-
-
-                
-
-
 
                 # if(dictParameters["lulc_activity_potential_map"]):
                 #     print("existe")
@@ -515,8 +616,7 @@ def processParameters(parametersList, id_catchment,id_case,basin, pathF, user, o
                 #     for activity in listActivities:
                 #         dictParameters[name][transition[1]][remove_accents(activity[0])] = 0
                 # value = dictParameters[name]
-                
-        
+
         if(outPathType):
             value = out_path
 
@@ -524,33 +624,25 @@ def processParameters(parametersList, id_catchment,id_case,basin, pathF, user, o
             # print("bio_param: " + name)
             region = getRegionFromId(basin)
             label = region[4]
-            file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
+            file = os.path.join(os.getcwd(), pathF, 'in',
+                                "biophysical_table.csv")
             #values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
-            values,headers=getDefaultBiophysicParams(label,default)
-            valuesUser,headersUser=getUserBiophysicParams(id_catchment,studyCase,user,label,'N')
-            # Reemplazar los parametros del usuario 
+            values, headers = getDefaultBiophysicParams(label, default)
+            valuesUser, headersUser = getUserBiophysicParams(
+                id_catchment, id_case, user, label, 'N')
+            # Reemplazar los parametros del usuario
             # en los parametros por defecto
-            for userIdx,valUser in enumerate(valuesUser):
-                for defIdx,defVal in enumerate(values):
-                    if (valUser[0]==defVal[0]):
-                        values[defIdx]=valUser
-            generateCsv(headers,values,file)
+            for userIdx, valUser in enumerate(valuesUser):
+                for defIdx, defVal in enumerate(values):
+                    if (valUser[0] == defVal[0]):
+                        values[defIdx] = valUser
+            generateCsv(headers, values, file)
             value = file
 
         if(cut):
-            value = cutRaster(catchment,value,in_path)
+            value = cutRaster(catchment, value, in_path)
 
-
-
-        
         dictParameters[name] = value
-        
-
-                
-
-
-
-
 
         # if(suffix):
         #     region = getRegionFromId(basin)
@@ -575,15 +667,14 @@ def processParameters(parametersList, id_catchment,id_case,basin, pathF, user, o
         # if(inputUser):
         #     value = inputs[name]
         # if(bio_param):
-		# 	region = getRegionFromId(basin)
-		# 	label = region[4]
-		# 	file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
-		# 	values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
-		# 	generateCsv(headers,values,file)
-		# 	value = file
+        # 	region = getRegionFromId(basin)
+        # 	label = region[4]
+        # 	file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
+        # 	values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
+        # 	generateCsv(headers,values,file)
+        # 	value = file
         # dictParameters[name] = value
         # print(parameter)
-
 
     for parameter in parametersList:
         # name = parameter[0]
@@ -625,32 +716,32 @@ def processParameters(parametersList, id_catchment,id_case,basin, pathF, user, o
         # #     value = inputs[name]
 
         # dictParameters[name] = value
-    # print(value)
+        # print(value)
 
-    
-	return dictParameters,out_path
+        return dictParameters, out_path
 
-def executeFunction(basin,id_catchment,id_usuario,inputs):
+
+def executeFunction(basin, id_catchment, id_usuario, inputs):
     date = datetime.date.today()
-    path = os.path.join("/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp",str(id_usuario) +  "_" + str(date.year) + "_" + str(date.month) + "_" + str(date.day))
-    pathPreprocIn = os.path.join(path,"in","02-PREPROC_RIOS")
-    pathPreprocOut = os.path.join(path,"out","02-PREPROC_RIOS")
-    pathCatchment = os.path.join(path,"in","catchment")
-
+    path = os.path.join("/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp",
+                        str(id_usuario) + "_" + str(date.year) + "_" + str(date.month) + "_" + str(date.day))
+    pathPreprocIn = os.path.join(path, "in", "02-PREPROC_RIOS")
+    pathPreprocOut = os.path.join(path, "out", "02-PREPROC_RIOS")
+    pathCatchment = os.path.join(path, "in", "catchment")
 
     isdir = os.path.isdir(path)
     if(not isdir):
         os.mkdir(path)
-        os.mkdir(os.path.join(path,"in"))
-        os.mkdir(os.path.join(path,"out"))
+        os.mkdir(os.path.join(path, "in"))
+        os.mkdir(os.path.join(path, "out"))
 
-    isdir = os.path.isdir(os.path.join(path,"in"))
+    isdir = os.path.isdir(os.path.join(path, "in"))
     if(not isdir):
-        os.mkdir(os.path.join(path,"in"))
+        os.mkdir(os.path.join(path, "in"))
 
-    isdir = os.path.isdir(os.path.join(path,"out"))
+    isdir = os.path.isdir(os.path.join(path, "out"))
     if(not isdir):
-        os.mkdir(os.path.join(path,"out"))
+        os.mkdir(os.path.join(path, "out"))
 
     isdir = os.path.isdir(pathPreprocIn)
     if(not isdir):
@@ -663,35 +754,41 @@ def executeFunction(basin,id_catchment,id_usuario,inputs):
     isdir = os.path.isdir(pathCatchment)
     if(not isdir):
         os.mkdir(pathCatchment)
-    
-    list = getParameters(basin,'preprocRIOS')
-    catchment = exportToShp(id_catchment,path)
-    parameters,out_path = processParameters(list, basin, catchment,path,inputs,id_usuario)
+
+    list = getParameters(basin, 'preprocRIOS')
+    catchment = exportToShp(id_catchment, path)
+    parameters, out_path = processParameters(
+        list, basin, catchment, path, inputs, id_usuario)
 
     print(parameters)
 
-    Pro.main(   working_path                = parameters["working_path"],
-            output_path                 = parameters["output_path"] ,
-            hydro_path                  = parameters["hydro_path"],
-            rios_coeff_table            = parameters["rios_coeff_table"],
-            lulc_raster_uri             = parameters["lulc_raster_uri"],
-            dem_raster_uri              = parameters["dem_raster_uri"],
-            erosivity_raster_uri        = parameters["erosivity_raster_uri"],
-            erodibility_raster_uri      = parameters["erodibility_raster_uri"],
-            soil_depth_raster_uri       = parameters["soil_depth_raster_uri"],
-            precip_month_raster_uri     = parameters["precip_month_raster_uri"],
-            soil_texture_raster_uri     = parameters["soil_texture_raster_uri"],
-            precip_annual_raster_uri    = parameters["precip_annual_raster_uri"],
-            aet_raster_uri              = parameters["aet_raster_uri"],
-            suffix                      = parameters["suffix"],
-            aoi_shape_uri               = parameters["aoi_shape_uri"],
-            streams_raster_uri          = parameters["streams_raster_uri"],
-            do_erosion          = parameters["do_erosion"], # Objetivo de aporte de sedimentos para reservorios y sistemas de tratamiento
-            do_nutrient_p       = parameters["do_nutrient_p"], # Objetivo nutrientes Fosforo
-            do_nutrient_n       = parameters["do_nutrient_n"], # Objetivo nutrientes Nitrogeno
-            do_flood            = parameters["do_flood"], # Objetivo control de inundaciones
-            do_gw_bf            = parameters["do_gw_bf"], # Objetivo recarga de agua subterranea y flujo base
-            river_buffer_dist   = int(parameters["river_buffer_dist"])) # Buffer
+    Pro.main(working_path=parameters["working_path"],
+             output_path=parameters["output_path"],
+             hydro_path=parameters["hydro_path"],
+             rios_coeff_table=parameters["rios_coeff_table"],
+             lulc_raster_uri=parameters["lulc_raster_uri"],
+             dem_raster_uri=parameters["dem_raster_uri"],
+             erosivity_raster_uri=parameters["erosivity_raster_uri"],
+             erodibility_raster_uri=parameters["erodibility_raster_uri"],
+             soil_depth_raster_uri=parameters["soil_depth_raster_uri"],
+             precip_month_raster_uri=parameters["precip_month_raster_uri"],
+             soil_texture_raster_uri=parameters["soil_texture_raster_uri"],
+             precip_annual_raster_uri=parameters["precip_annual_raster_uri"],
+             aet_raster_uri=parameters["aet_raster_uri"],
+             suffix=parameters["suffix"],
+             aoi_shape_uri=parameters["aoi_shape_uri"],
+             streams_raster_uri=parameters["streams_raster_uri"],
+             # Objetivo de aporte de sedimentos para reservorios y sistemas de tratamiento
+             do_erosion=parameters["do_erosion"],
+             # Objetivo nutrientes Fosforo
+             do_nutrient_p=parameters["do_nutrient_p"],
+             # Objetivo nutrientes Nitrogeno
+             do_nutrient_n=parameters["do_nutrient_n"],
+             # Objetivo control de inundaciones
+             do_flood=parameters["do_flood"],
+             # Objetivo recarga de agua subterranea y flujo base
+             do_gw_bf=parameters["do_gw_bf"],
+             river_buffer_dist=int(parameters["river_buffer_dist"]))  # Buffer
 
 
 def remove_accents(string):
@@ -707,22 +804,21 @@ def remove_accents(string):
 
     return string
 
+
 def execModel(args):
     # logger.debug("execModel :: args :: %s", args)
     print(args)
     rios.execute(args)
 
 
-
-
 # def executeFunction(basin,model,type,id_catchment,id_usuario):
 # 	date = datetime.date.today()
 # 	path = createFolder(id_usuario,date)
 
-# 	list = getParameters(basin,model)	
+# 	list = getParameters(basin,model)
 # 	catchment = exportToShp(id_catchment, path)
 # 	parameters,pathF,label = processParameters(list,basin,catchment,path,type,model)
-	
+
 
 # 	if(model == 'awy'):
 # 		awy.execute(parameters)

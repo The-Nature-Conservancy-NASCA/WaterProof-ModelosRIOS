@@ -126,7 +126,25 @@ def readCsv(file,field):
 
     return resultList
 
+def filterCsvLucode(file,field):
+    with open(file) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        index = 0
+        resultList = []
+        for row in csv_reader:
+            if line_count == 0:
+                # print("Name: " + row)
+                if field in row:
+                    index = row.index(field)
+                line_count += 1
+            else:
+                # print("Value: " + row)
+                if (int(row[index])<=8):
+                    resultList.append(row[index])
+                line_count += 1
 
+    return resultList
 # connectMongo("apps.skaphe.com",27017,"waterProof","parametros_biofisicos")
 
 # values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",1,"SA_1",True)

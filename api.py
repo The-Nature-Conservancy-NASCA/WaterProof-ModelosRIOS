@@ -95,9 +95,10 @@ def execPreproc():
         os.mkdir(process_path + 'in')
     
     parameters, out_path = processParameters(
-        list_parameters, catchment,id_case,basin, process_path, id_usuario, listObjs, obj, outputPath, catchmentOut)
-
-    # print(parameters)
+        nbsList,list_parameters, catchment,id_case,basin, process_path, id_usuario, listObjs, obj, outputPath, catchmentOut)
+        
+    print(":::PARAMETERS::::")
+    print(parameters)
 
     execModel(parameters)
     # with (open(process_path + 'parameters.json', 'w')) as fp:
@@ -107,7 +108,7 @@ def execPreproc():
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36',
     }
 
-    base_url_api = 'http://dev.skaphe.com:8000/'
+    # base_url_api = 'http://dev.skaphe.com:8000/'
     base_url_api = 'http://wfapp_py3_container:8000/'
     url = base_url_api + 'cobTrans'
 
