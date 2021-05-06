@@ -17,6 +17,8 @@ sys.path.append(os.path.split(os.getcwd())[0] + os.path.sep + 'RIOS_Toolbox')
 import RIOS_Toolbox.rios_preprocessor as Pro
 import RIOS_Toolbox.rios as rios
 import re
+import json
+
 logger = logging.getLogger('execRios')
 logger.setLevel(logging.DEBUG)
 # Correspondencia/homologacion entre objetivos de rios_preprocessor y rios
@@ -668,7 +670,12 @@ def executeFunction(basin,id_catchment,id_usuario,inputs):
     catchment = exportToShp(id_catchment,path)
     parameters,out_path = processParameters(list, basin, catchment,path,inputs,id_usuario)
 
-    print(parameters)
+    #print(parameters)
+    print ("save file :: %s%s" % (out_path,"parameters_rios.json"))
+    txt_file = open(os.path.join(out_path,"parameters_rios.json"), "w")
+    json_parameters = json.dumps(parameters, indent=2)
+    txt_file.write(json_parameters)
+    txt_file.close()
 
     Pro.main(   working_path                = parameters["working_path"],
             output_path                 = parameters["output_path"] ,
