@@ -13,25 +13,45 @@ def connectMongo(host,port):
     connection = MongoClient(host,port)
     return connection
 
-# Obtener parametros biofisicos filtrado por macroregion
+# Obtener parametros biofisicos por defecto filtrados por
+# macroregion 
 
-def getBiophysicParams(user,macro_region,default):
+def getDefaultBiophysicParams(macro_region,default):
     results = list()
     keys=list()
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('get_biophysycal_params', [macro_region,default,user])
+    cursor.callproc('get_default_biophysycal_params', [macro_region,default])
     result = cursor.fetchall()
     resultKeys=cursor.description
     for key in resultKeys:
-        print("RESULT KEY")
-        print(key[0])
+        # print("RESULT KEY")
+        # print(key[0])
         keys.append(key[0])
     for row in result:
-        print("Row")
-        print(row)
+        # print("Row")
+        # print(row)
         results.append(row)
     return results,keys
 
+# Obtener parametros biofisicos por defecto filtrados por
+# macroregion 
+
+def getUserBiophysicParams(intake,studyCase,user,macro_region,default):
+    results = list()
+    keys=list()
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('get_user_biophysycal_params', [macro_region,default,intake,studyCase,user])
+    result = cursor.fetchall()
+    resultKeys=cursor.description
+    for key in resultKeys:
+        # print("RESULT KEY")
+        # print(key[0])
+        keys.append(key[0])
+    for row in result:
+        # print("Row")
+        # print(row)
+        results.append(row)
+    return results,keys
 
 def getColsParams(host,port,database,collection,user,macro_region,default):
     con = connectMongo(host,port)

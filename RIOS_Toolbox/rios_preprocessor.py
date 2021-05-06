@@ -1744,10 +1744,11 @@ def process_flood_mitigation(intermediate_files, output_files,
                                 flood_index_cover)
     
     # print(lulc_coeff_df['file'])
+    lulc_coeff_df_file = lulc_coeff_df['file']
     indexD['LULC cover'] = {
             'index': flood_index_cover,
             'source': {"LULC": {"file": lulc_raster_uri}},
-            'factor': {'LULC table': {"file": lulc_coeff_df['file']},
+            'factor': {'LULC table': {"file": lulc_coeff_df['file'][lulc_coeff_df['file'].index[0]]},
                       'LULC factor': rios_fields["cover"]}}
 
     if not os.path.exists(flood_index_rough):
@@ -1757,7 +1758,7 @@ def process_flood_mitigation(intermediate_files, output_files,
     indexD['LULC rough'] = {
             'index': flood_index_rough,
             'source': {"LULC": {"file": lulc_raster_uri}},
-            'factor': {'LULC table': {"file": lulc_coeff_df['file']},
+            'factor': {'LULC table': {"file": lulc_coeff_df['file'][lulc_coeff_df['file'].index[0]]},
                        'LULC factor': rios_fields["roughness"]}}
 
     # Make other index rasters as necessary
