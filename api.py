@@ -130,6 +130,7 @@ def execPreproc():
         'models': ['sdr', 'awy', 'ndr'],
         'catchment': catchment,
         'carbon': 'y',
+        'case': id_case
     }
     logger.debug("1. Execute Invest (Current)")
     try:
