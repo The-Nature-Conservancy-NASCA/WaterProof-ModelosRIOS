@@ -369,8 +369,6 @@ def processParameters(parametersList, basin,id_catchment, studyCase,catchment, p
                 for defIdx,defVal in enumerate(values):
                     if (valUser[0]==defVal[0]):
                         values[defIdx]=valUser
-            print(":::VALUES:::")
-            print(values)
             generateCsv(headers, values, file)
             value = file
         dictParameters[name] = value
@@ -461,8 +459,6 @@ def executeFunction(basin, id_catchment, id_usuario, inputs,id_case):
 
     list = getParameters(basin, 'preprocRIOS')
     catchment = exportToShp(id_catchment, path)
-    print("::CATCHMENT RESULT")
-    print(catchment)
     parameters, out_path, catchmentOut = processParameters(
         list, basin,id_catchment,id_case, catchment, path, inputs, id_usuario,)
 
