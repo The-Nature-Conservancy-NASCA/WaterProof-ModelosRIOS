@@ -97,10 +97,12 @@ def exportToShpActivities(nbsList, path, user):
     while feat is not None:
         output = os.path.join(path, "activity_"+feat.name+"_shp")
         print(output)
-        source = osr.SpatialReference()
+        source = osr.SpatialReference()        
         source.ImportFromEPSG(4326)
         target = osr.SpatialReference()
-        target.ImportFromEPSG(3857)
+        epsg_3857 = 3857
+        epsg_54004 = 54004
+        target.ImportFromEPSG(epsg_54004)
         transform = osr.CoordinateTransformation(source, target)
         # Schema definition of SHP file
         out_driver = ogr.GetDriverByName('ESRI Shapefile')
