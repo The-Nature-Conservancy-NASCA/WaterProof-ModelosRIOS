@@ -391,13 +391,17 @@ def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pat
                 listAct = getActivities(nbsList, user)
                 # print(listAct)
                 for la in listAct:
+                    CImple=la[1]
+                    COport=la[4]
+                    CMant=la[2]
+                    FrecMant=la[5]
                     dictParameters[name][remove_accents(la[0])] = {}
                     dictParameters[name][remove_accents(
                         la[0])]["measurement_unit"] = measurement_unit
                     dictParameters[name][remove_accents(
                         la[0])]["measurement_value"] = measurement_value
                     dictParameters[name][remove_accents(la[0])]["unit_cost"] = float(
-                        la[1] + la[2])  # Sum of costs (impl + (mant/periodicity) + oportunity)
+                        CImple+COport+(CMant/FrecMant))  # Sum of costs (impl + (mant/periodicity) + oportunity)
 
                 value = dictParameters[name]
 
