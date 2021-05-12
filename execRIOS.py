@@ -253,6 +253,9 @@ def cutRaster(catchment, path, out_path):
     return os.path.join(out_path, os.path.basename(path))
 
 
+
+# Obtener las actividades asociadas a una SBN
+
 def getActivities(nbsList, user_id):
     result = ''
     listResult = []
@@ -265,6 +268,7 @@ def getActivities(nbsList, user_id):
     cursor.close()
     return listResult
 
+# Verificar las transacciones configuradas para una SBN
 def checkNbsTransitionMap(idNbs,id_transition):
     result = ''
     listResult = []
@@ -401,7 +405,7 @@ def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pat
                     dictParameters[name][remove_accents(
                         la[0])]["measurement_value"] = measurement_value
                     dictParameters[name][remove_accents(la[0])]["unit_cost"] = float(
-                        CImple+COport+(CMant/FrecMant))  # Sum of costs (impl + (mant/periodicity) + oportunity)
+                        CImple+COport+(CMant/FrecMant))
 
                 value = dictParameters[name]
 
@@ -479,8 +483,8 @@ def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pat
                     for trans in transformations:
                         if (lulc == str(trans[0])):
                             list_la = []
-                            list_la.append(remove_accents(trans[3]))
-                            dictParameters[name][lulc] = list_la
+                            list_la.append(remove_accents(trans[4]))
+                            dictParameters[name][lulc].append(list_la[0])
                     # print(listActivities_1)
                     # for act in listActivities_1:
                     #     list_la.append(remove_accents(act[0]))
