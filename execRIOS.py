@@ -808,7 +808,7 @@ def remove_accents(string):
 
 def execModel(args):
     # logger.debug("execModel :: args :: %s", args)
-    print(args)
+    # print(args)
     rios.execute(args)
 
 

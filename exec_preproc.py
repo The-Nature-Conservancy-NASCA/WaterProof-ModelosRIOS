@@ -15,6 +15,7 @@ import fiona
 import ogr
 import osr
 import datetime
+import json
 from rasterio.mask import mask
 from zonalStatistics import calculateRainfallDayMonth, calculateStatistic
 from createBioParamCsv import getColsParams, generateCsv, getDefaultBiophysicParams,getUserBiophysicParams
@@ -482,6 +483,8 @@ def executeFunction(basin, id_catchment, id_usuario, inputs,id_case):
     for i in inputs:
         objectives[i] = objectivesDict[i]
 
+    with (open(out_path + '_preprocessor_parameters.json', 'w')) as fp:
+        json.dump(parameters, fp)
     Pro.main(working_path=parameters["working_path"],
              output_path=parameters["output_path"],
              hydro_path=parameters["hydro_path"],
