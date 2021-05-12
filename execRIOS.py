@@ -81,7 +81,7 @@ def exportToShpActivities(nbsList, path, user):
              sqlParam=sqlParam+str(nbs[0])+"]"
         print(sqlParam)
 
-    sql = ("select shp.id,nbs.name,shp.action,shp.area"
+    sql = ("select shp.id,nbs.slug,shp.action,shp.area"
            " from waterproof_nbs_ca_waterproofnbsca nbs"
            " join waterproof_nbs_ca_activityshapefile shp on nbs.activity_shapefile_id = shp.id"
            " where nbs.id=ANY("+sqlParam+");")
@@ -95,7 +95,7 @@ def exportToShpActivities(nbsList, path, user):
     n=0
     outputList=[]
     while feat is not None:
-        output = os.path.join(path, "activity_"+feat.name+"_shp")
+        output = os.path.join(path, "activity_"+feat.slug+"_shp")
         print(output)
         source = osr.SpatialReference()        
         source.ImportFromEPSG(4326)
@@ -121,7 +121,7 @@ def exportToShpActivities(nbsList, path, user):
         geom = feat.GetGeometryRef()
         geom.Transform(transform)
         featDef.SetGeometry(geom)
-        featDef.SetField('activity_n', remove_accents(feat.name))
+        featDef.SetField('activity_n', feat.slug)
         featDef.SetField('action', feat.action)
         out_layer.CreateFeature(featDef)
         feat.Destroy()
@@ -395,13 +395,11 @@ def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pat
                     COport=la[4]
                     CMant=la[2]
                     FrecMant=la[5]
-                    dictParameters[name][remove_accents(la[0])] = {}
-                    dictParameters[name][remove_accents(
-                        la[0])]["measurement_unit"] = measurement_unit
-                    dictParameters[name][remove_accents(
-                        la[0])]["measurement_value"] = measurement_value
-                    dictParameters[name][remove_accents(la[0])]["unit_cost"] = float(
-                        CImple+COport+(CMant/FrecMant))  # Sum of costs (impl + (mant/periodicity) + oportunity)
+                    name_ = remove_accents(la[0])
+                    dictParameters[name][name_] = {}
+                    dictParameters[name][name_]["measurement_unit"] = measurement_unit
+                    dictParameters[name][name_]["measurement_value"] = measurement_value
+                    dictParameters[name][name_]["unit_cost"] = float(CImple+COport+(CMant/FrecMant))  # Sum of costs (impl + (mant/periodicity) + oportunity)
 
                 value = dictParameters[name]
 
@@ -438,12 +436,11 @@ def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pat
                     for activity in listActivities:
                         idNbs=activity[3]
                         transition_map=checkNbsTransitionMap(idNbs,transition[3])
+                        name_ = remove_accents(activity[0])
                         if (transition_map):
-                            dictParameters[name][transition[1]
-                                                ][remove_accents(activity[0])] = 1
+                            dictParameters[name][transition[1]][name_] = 1
                         else:
-                            dictParameters[name][transition[1]
-                                                ][remove_accents(activity[0])] = 0
+                            dictParameters[name][transition[1]][name_] = 0
                 value = dictParameters[name]
 
             elif(riosType == 'lulc_act'):
@@ -480,12 +477,7 @@ def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pat
                         if (lulc == str(trans[0])):
                             list_la = []
                             list_la.append(remove_accents(trans[3]))
-                            dictParameters[name][lulc] = list_la
-                    # print(listActivities_1)
-                    # for act in listActivities_1:
-                    #     list_la.append(remove_accents(act[0]))
-
-                    # print(list_la)
+                            dictParameters[name][lulc] = list_la                    
 
                 value = dictParameters[name]
 
@@ -509,10 +501,9 @@ def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pat
                 listAct = getActivities(nbsList, user)
                 # print(listAct)
                 for la in listAct:
-                    dictParameters[name]["activity_budget"][remove_accents(la[0])] = {
-                    }
-                    dictParameters[name]["activity_budget"][remove_accents(
-                        la[0])]["budget_amount"] = 10000  # sustituir
+                    name_ = remove_accents(la[0])
+                    dictParameters[name]["activity_budget"][name_] = {}
+                    dictParameters[name]["activity_budget"][name_]["budget_amount"] = 10000  # TODO sustituir
 
                 dictParameters[name]["if_left_over"] = "Report remainder"
                 # Sustituir
@@ -610,20 +601,6 @@ def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pat
                                                                         ]["bins"]["interpolation"] = "linear"
 
                 value = dictParameters[name]
-
-                # if(dictParameters["lulc_activity_potential_map"]):
-                #     print("existe")
-                # else:
-                #     print("no existe")
-
-                # dictParameters[name] = {}
-                # transitionsList = getTransitions()
-                # for transition in transitionsList:
-                #     dictParameters[name][transition[1]] = {}
-                #     listActivities = getActivities(user)
-                #     for activity in listActivities:
-                #         dictParameters[name][transition[1]][remove_accents(activity[0])] = 0
-                # value = dictParameters[name]
 
         if(outPathType):
             value = out_path
