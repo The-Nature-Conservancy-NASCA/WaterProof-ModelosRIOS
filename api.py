@@ -1,5 +1,5 @@
 from flask import Flask
-from exec_preproc import executeFunction,getStudyCaseCatchments,getCatchmentBasin,getStudyCaseNbs
+from exec_preproc import executeFunction,getStudyCaseCatchments,getCatchmentBasin,getStudyCaseNbs,getStudyCaseObjectives
 from execRIOS import getParameters,processParameters,execModel
 from flask import request
 from flask import jsonify
@@ -24,19 +24,51 @@ def welcome():
 
 @app.route("/preprocRIOS", methods=['GET'])
 def execPreproc():
-    #do_erosion,do_np, do_nn, do_flood,do_gw_bf,basin,catchment,id_usuario
-    # print(request.args.get('do_np'))
-    do_erosion = str2bool(request.args.get('do_erosion'))
-    do_np = str2bool(request.args.get('do_np'))
-    do_nn = str2bool(request.args.get('do_nn'))
-    do_flood = str2bool(request.args.get('do_flood'))
-    do_gw_bf = str2bool(request.args.get('do_gw_bf'))
-    #basin = request.args.get('basin')
-    #catchment = str(request.args.get('catchment'))
     id_usuario = request.args.get('id_usuario')
     id_case = request.args.get('id_case')
+    studyCases_objectives=getStudyCaseObjectives(id_case)
+    objectives={
+        'do_erosion':False,
+        'do_nutrient_p': False,
+        'do_nutrient_n':False,
+        'do_flood': False,
+        'do_gw_bf': False
+    }
+    
+    for obj in studyCases_objectives:
+        # Erosion control for drinking wwater quality RIOS
+        if (obj[0]==1):
+            objectives['do_erosion']=True
+        # Erosion control for reservoir maintenance RIOS
+        elif (obj[0]==2):
+            objectives['do_erosion']=True
+        # Nutrient retention (Phosporous) RIOS
+        elif (obj[0]==3):
+            objectives['do_nutrient_p']=True
+        # Nutrient retention (Nitrogen) RIOS
+        elif (obj[0]==4):
+            objectives['do_nutrient_n']=True 
+        # Flood mitigation RIOS
+        elif (obj[0]==5):
+            objectives['do_flood']=True
+        # Groundwater recharge enhancement RIOS        
+        elif (obj[0]==6):
+            objectives['do_gw_bf']=True
+        # Baseflow RIOS
+        else:
+            objectives['do_gw_bf']=True
+        print(obj)
+
+    #do_erosion,do_np, do_nn, do_flood,do_gw_bf,basin,catchment,id_usuario
+    # print(request.args.get('do_np'))
+    do_erosion =  objectives['do_erosion']
+    do_np = objectives['do_nutrient_p']
+    do_nn = objectives['do_nutrient_n']
+    do_flood = objectives['do_flood']
+    do_gw_bf = objectives['do_gw_bf']
+    #basin = request.args.get('basin')
+    #catchment = str(request.args.get('catchment'))
     logging.debug('debug message')
-    # print(user)
     inputs = {"do_erosion": bool(do_erosion), "do_nutrient_p": bool(do_np), "do_nutrient_n": bool(
         do_nn), "do_flood": bool(do_flood), "do_gw_bf": bool(do_gw_bf)}
     catchments = getStudyCaseCatchments(id_case)
