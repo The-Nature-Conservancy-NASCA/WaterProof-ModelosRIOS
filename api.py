@@ -88,8 +88,7 @@ def execPreproc():
 
     print(":::BASIN:::")
     print(basin)
-    obj, outputPath, catchmentOut = executeFunction(
-        basin, catchment, id_usuario, inputs,id_case)
+    obj, outputPath, catchmentOut = executeFunction(basin, catchment, id_usuario, inputs,id_case)
     list_parameters = getParameters(basin, 'rios')
     print("::CATCHMENT OUT:::")
     print(catchmentOut)
@@ -133,8 +132,8 @@ def execPreproc():
     print(parameters)
 
     execModel(parameters)
-    # with (open(process_path + 'parameters.json', 'w')) as fp:
-    #     json.dump(parameters, fp)
+    with (open(process_path + 'exec_rios_parameters.json', 'w')) as fp:
+        json.dump(parameters, fp)
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36',
