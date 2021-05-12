@@ -155,6 +155,19 @@ def resamplingRaster(templatePath, srcPath, out):
 
     print("finish")
 
+
+def getStudyCaseObjectives(id_case):
+    result = ''
+    listResult = []
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('get_studycase_objective', [id_case])
+    result = cursor.fetchall()
+    for row in result:
+        # print(row)
+        listResult.append(row)
+    cursor.close()
+    return listResult
+
 # Obtener captaciones asociadas a un caso de estudio
 
 
