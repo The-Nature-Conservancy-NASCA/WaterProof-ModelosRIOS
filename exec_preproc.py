@@ -161,7 +161,7 @@ def getStudyCaseObjectives(id_case):
     result = ''
     listResult = []
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('get_studycase_objective', [id_case])
+    cursor.callproc('__wp_get_studycase_objective', [id_case])
     result = cursor.fetchall()
     for row in result:
         # print(row)
@@ -176,7 +176,7 @@ def getStudyCaseCatchments(caseStudy):
     result = ''
     listResult = []
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('get_studyCase_catchments', [caseStudy])
+    cursor.callproc('__wp_get_studyCase_catchments', [caseStudy])
     result = cursor.fetchall()
     for row in result:
         print("Row")
@@ -191,7 +191,7 @@ def getCatchmentBasin(catchment):
     result = ''
     listResult = []
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('get_catchment_basin', [catchment])
+    cursor.callproc('__wp_get_catchment_basin', [catchment])
     result = cursor.fetchall()
     for row in result:
         print("Row basin")
@@ -206,7 +206,7 @@ def getStudyCaseNbs(caseStudy):
     result = ''
     listResult = []
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('get_studycase_nbs', [caseStudy])
+    cursor.callproc('__wp_get_studycase_nbs', [caseStudy])
     result = cursor.fetchall()
     for row in result:
         print("Row")
@@ -220,7 +220,7 @@ def getParameters(basin, model):
     result = ''
     listResult = []
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('getparametersmodel', [basin, model])
+    cursor.callproc('__wp_getparametersmodel', [basin, model])
     result = cursor.fetchall()
     for row in result:
         listResult.append(row)
@@ -233,7 +233,7 @@ def getParameters(basin, model):
 def getRegionFromId(basin):
     result = ''
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('getBasin', [basin])
+    cursor.callproc('__wp_getbasin', [basin])
     result = cursor.fetchall()
     for row in result:
         result = row
@@ -246,7 +246,7 @@ def getRegionFromId(basin):
 def getConstantFromBasin(basin, constantName):
     result = ''
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('getconstant', [basin, constantName])
+    cursor.callproc('__wp_getconstant', [basin, constantName])
     result = cursor.fetchall()
     for row in result:
         result = row
@@ -443,7 +443,7 @@ def executeFunction(basin, id_catchment, id_usuario, inputs,id_case):
     pathPreprocOut = os.path.join(path, "out", "02-PREPROC_RIOS")
     pathCatchment = os.path.join(path, "in", "catchment")
 
-    print(inputs)
+    #print(inputs)
 
     isdir = os.path.isdir(path)
     if(not isdir):

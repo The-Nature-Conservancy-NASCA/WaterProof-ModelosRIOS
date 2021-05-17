@@ -5,7 +5,7 @@
 # Date: 14/12/2020
 # Author: Diego Rodriguez - Skaphe Tecnologia SAS
 # WFApp
-import logging
+import logging,math
 import sys, os, rasterio, fiona, ogr, osr, datetime
 from rasterio.mask import mask
 from zonalStatistics import calculateRainfallDayMonth,calculateStatistic
@@ -171,7 +171,7 @@ def getParameters(basin, model):
     result = ''
     listResult = []
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('getparametersmodel', [basin, model])
+    cursor.callproc('__wp_getparametersmodel', [basin, model])
     result = cursor.fetchall()
     for row in result:
         listResult.append(row)
@@ -184,7 +184,7 @@ def getParameters(basin, model):
 def getRegionFromId(basin):
     result = ''
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('getBasin', [basin])
+    cursor.callproc('__wp_getbasin', [basin])
     result = cursor.fetchall()
     for row in result:
         result = row
@@ -197,7 +197,7 @@ def getRegionFromId(basin):
 def getConstantFromBasin(basin, constantName):
     result = ''
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('getconstant', [basin, constantName])
+    cursor.callproc('__wp_getconstant', [basin, constantName])
     result = cursor.fetchall()
     for row in result:
         result = row
@@ -260,7 +260,19 @@ def getActivities(nbsList, user_id):
     result = ''
     listResult = []
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('get_activities', [nbsList])
+    cursor.callproc('__wp_get_activities', [nbsList])
+    result = cursor.fetchall()
+    for row in result:
+        # print(row)
+        listResult.append(row)
+    cursor.close()
+    return listResult
+
+def getNbsBudget(nbsList,id_case):
+    result = ''
+    listResult = []
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('__wp_get_nbs_budget', [nbsList,id_case])
     result = cursor.fetchall()
     for row in result:
         # print(row)
@@ -273,7 +285,7 @@ def checkNbsTransitionMap(idNbs,id_transition):
     result = ''
     listResult = []
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('check_nbs_transition_map', [idNbs,id_transition])
+    cursor.callproc('__wp_check_nbs_transition_map', [idNbs,id_transition])
     result = cursor.fetchall()
     if (len(result)>0):
         cursor.close()
@@ -286,7 +298,7 @@ def getNbsTransformations(nbsList):
     result = ''
     listResult = []
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('get_nbs_transformations', [nbsList])
+    cursor.callproc('__wp_get_nbs_transformations', [nbsList])
     result = cursor.fetchall()
     for row in result:
         # print(row)
@@ -299,7 +311,7 @@ def getTransitions():
     result = ''
     listResult = []
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('gettransitions', [])
+    cursor.callproc('__wp_gettransitions', [])
     result = cursor.fetchall()
     for row in result:
         listResult.append(row)
@@ -311,7 +323,7 @@ def getParametersByObj(id_obj, id_basin):
     result = ''
     listResult = []
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('getparametersbyobj', [id_basin, id_obj])
+    cursor.callproc('__wp_getparametersbyobj', [id_basin, id_obj])
     result = cursor.fetchall()
     for row in result:
         listResult.append(row)
@@ -323,7 +335,7 @@ def getActivityShapefile(nbsList):
     result = ''
     listResult = []
     cursor = connect('postgresql_alfa').cursor()
-    cursor.callproc('get_activities_shapefiles', [nbsList])
+    cursor.callproc('__wp_get_activities_shapefiles', [nbsList])
     result = cursor.fetchall()
     for row in result:
         # print(row)
@@ -336,7 +348,7 @@ def getObjectives(ids):
     listResult = []
     for id in ids:
         cursor = connect('postgresql_alfa').cursor()
-        cursor.callproc('getobjectives', [id])
+        cursor.callproc('__wp_getobjectives', [id])
         result = cursor.fetchall()
         for row in result:
             listResult.append(row)
@@ -344,6 +356,65 @@ def getObjectives(ids):
 
     return listResult
 
+def getDefaultTransitionPriority(obj,transition):
+    result = ''
+    listResult = []
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('__wp_get_default_transitions_priorities', [obj,transition])
+    result = cursor.fetchall()
+    for row in result:
+        listResult.append(row)
+        cursor.close()
+
+    return listResult
+
+def getUserTransitionPriority(obj,transition,catchment,user,studyCase):
+    result = ''
+    listResult = []
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('__wp_get_user_transitions_priorities', [obj,transition,catchment,user,studyCase])
+    result = cursor.fetchall()
+    for row in result:
+        listResult.append(row)
+        cursor.close()
+
+    return listResult
+
+def getUserObjectivePriority(obj,transition,parameter,catchment,user,studyCase):
+    result = ''
+    listResult = []
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('__wp_get_user_objectives_priorities', [obj,transition,parameter,catchment,user,studyCase])
+    result = cursor.fetchall()
+    for row in result:
+        listResult.append(row)
+        cursor.close()
+
+    return listResult
+
+def getDefaultObjectivePriority(obj,transition,parameter):
+    result = ''
+    listResult = []
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('__wp_get_default_objectives_priorities', [obj,transition,parameter])
+    result = cursor.fetchall()
+    for row in result:
+        listResult.append(row)
+        cursor.close()
+
+    return listResult
+
+def getStudyCaseBudget(id_case):
+    result = ''
+    listResult = []
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('__wp_get_studycase_budget', [id_case])
+    result = cursor.fetchall()
+    for row in result:
+        # print(row)
+        listResult.append(row)
+    cursor.close()
+    return listResult
 
 # Procesar parametros
 def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pathF, user, objectives, inputs_objs, outPreProc, catchment):
@@ -499,26 +570,64 @@ def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pat
                     dictParameters[name][transition[1]] = {}
                     listObjectives = getObjectives(objectives)
                     for obj in listObjectives:
-                        dictParameters[name][transition[1]][obj[0]] = 1
+                        user_priority=getUserTransitionPriority(obj[1],transition[5],int(id_catchment),int(user),int(id_case))
+                        if (len(user_priority)>0):
+                            for value in user_priority:
+                                replacedDotValue=value[0].replace(',','.')
+                                dictParameters[name][transition[1]][obj[0]] = float(replacedDotValue)
+                        else:
+                            default_priority=getDefaultTransitionPriority(obj[1],transition[5])
+                            for value in default_priority:
+                                replacedDotValue=value[0].replace(',','.')
+                                dictParameters[name][transition[1]][obj[0]] = float(replacedDotValue)
 
                 value = dictParameters[name]
                 # print(listCsv)
 
             elif(riosType == "budget_conf"):
+                # Consultar datos basicos del budget para el caso de estudio 
+                studyCase_budget=getStudyCaseBudget(id_case)
+                years_spend=studyCase_budget[0][1]
+                report_rem=studyCase_budget[0][3]
+                anual_investment=studyCase_budget[0][2]
+                analysis_type=studyCase_budget[0][0]
+                #  public.waterproof_study_cases_studycases campo analysys_type para saber si es full o investment
                 dictParameters[name] = {}
                 # Parametro a sustituir por el numero de años
-                dictParameters[name]["years_to_spend"] = 30
-                dictParameters[name]["activity_budget"] = {}
-                listAct = getActivities(nbsList, user)
-                # print(listAct)
-                for la in listAct:
-                    name_ = remove_accents(la[0])
-                    dictParameters[name]["activity_budget"][name_] = {}
-                    dictParameters[name]["activity_budget"][name_]["budget_amount"] = 10000  # TODO sustituir
+                dictParameters[name]["years_to_spend"] =  years_spend
+                #public.waterproof_study_cases_studycases.reminder True|False 
+                # Si es True colocar "Proportional reallocate"
+                # Si es false "Report remainder"
+                if (report_rem==True):
+                    dictParameters[name]["if_left_over"] = "Proportional reallocate" 
+                else:
+                    dictParameters[name]["if_left_over"] = "Report remainder" 
 
-                dictParameters[name]["if_left_over"] = "Report remainder"
-                # Sustituir
-                dictParameters[name]["floating_budget"] = 999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
+                dictParameters[name]["activity_budget"] = {}
+                listAct = getNbsBudget(nbsList, id_case)
+                #Validar si el tipo analisis: Full|Investment
+                if (analysis_type=='FULL'):
+                    print("FULL")
+                    print(listAct)
+                    for la in listAct:
+                        name_ = remove_accents(la[0])
+                        dictParameters[name]["activity_budget"][name_] = {}
+                        # Si es investment se consulta public.waterproof_study_cases_studycases_nbs.value
+                        # Si es Full se consulta public.waterproof_study_cases_studycases_nbs.value pero es porcentaje y se calcula sobre el floating_budget
+                        dictParameters[name]["activity_budget"][name_]["budget_amount"] = 10000  # TODO
+                        # Sustituir
+                        # Si es de tipo full va el 9999999
+                        # Si es investment va el valor que diga el campo public.waterproof_study_cases_studycases.anual_investment
+                        dictParameters[name]["floating_budget"] = 999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999 
+                elif(analysis_type=='INVESTMENT'):
+                    print("INVESTMENT")
+                    for la in listAct:
+                        name_ = remove_accents(la[0])
+                        dictParameters[name]["activity_budget"][name_] = {}
+                        # Si es investment se consulta public.waterproof_study_cases_studycases_nbs.value
+                        # Si es Full se consulta public.waterproof_study_cases_studycases_nbs.value pero es porcentaje y se calcula sobre el floating_budget
+                        dictParameters[name]["activity_budget"][name_]["budget_amount"] = float(la[6])  # TODO
+                        dictParameters[name]["floating_budget"] = float(anual_investment)
 
                 value = dictParameters[name]
 
@@ -528,7 +637,7 @@ def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pat
                 for obj in listObjectives:
                     dictParameters[name][obj[0]] = {}
                     dictParameters[name][obj[0]
-                                         ]["rios_model_type"] = "rios_tier_0"
+                                         ]["rios_model_type"] = "rios_tier_0" 
                     dictParameters[name][obj[0]]["priorities"] = {}
                     transitionsList = getTransitions()
                     listParametersObj = getParametersByObj(obj[1], basin)
@@ -536,8 +645,20 @@ def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pat
                         dictParameters[name][obj[0]
                                              ]["priorities"][transition[1]] = {}
                         for param in listParametersObj:
-                            dictParameters[name][obj[0]
-                                                 ]["priorities"][transition[1]][param[0]] = 0
+                            user_priority=getUserObjectivePriority(obj[1],transition[5],param[3],int(id_catchment),int(user),int(id_case))
+                            if (len(user_priority)>0):
+                                for value in user_priority:
+                                    dictParameters[name][obj[0]]["priorities"][transition[1]][param[0]] = 0
+                                    # Descomentar cuando se corrija error de espacios en blanco en la tabla de lA BD
+                                    # dictParameters[name][obj[0]]["priorities"][transition[1]][param[0]] = value[0]
+                            else:
+                                default_priority=getDefaultObjectivePriority(obj[1],transition[5],param[3])
+                                for value in default_priority:
+                                    print()
+                                    # Descomentar cuando se corrija error de espacios en blanco en la tabla de lA BD
+                                    # dictParameters[name][obj[0]]["priorities"][transition[1]][param[0]] = value[0]
+                            
+                            dictParameters[name][obj[0]]["priorities"][transition[1]][param[0]] = 0
 
                     dictParameters[name][obj[0]]["factors"] = {}
 
