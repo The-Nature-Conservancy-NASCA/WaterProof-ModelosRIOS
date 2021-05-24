@@ -612,9 +612,10 @@ def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pat
                     for la in listAct:
                         name_ = remove_accents(la[0])
                         dictParameters[name]["activity_budget"][name_] = {}
+                        budget_amount=float(la[6])*999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
                         # Si es investment se consulta public.waterproof_study_cases_studycases_nbs.value
                         # Si es Full se consulta public.waterproof_study_cases_studycases_nbs.value pero es porcentaje y se calcula sobre el floating_budget
-                        dictParameters[name]["activity_budget"][name_]["budget_amount"] = 10000  # TODO
+                        dictParameters[name]["activity_budget"][name_]["budget_amount"] = budget_amount  # TODO
                         # Sustituir
                         # Si es de tipo full va el 9999999
                         # Si es investment va el valor que diga el campo public.waterproof_study_cases_studycases.anual_investment
@@ -648,17 +649,21 @@ def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pat
                             user_priority=getUserObjectivePriority(obj[1],transition[5],param[3],int(id_catchment),int(user),int(id_case))
                             if (len(user_priority)>0):
                                 for value in user_priority:
-                                    dictParameters[name][obj[0]]["priorities"][transition[1]][param[0]] = 0
-                                    # Descomentar cuando se corrija error de espacios en blanco en la tabla de lA BD
-                                    # dictParameters[name][obj[0]]["priorities"][transition[1]][param[0]] = value[0]
+                                    if (',' in value[0]):
+                                        replacedDotValue=value[0].replace(',','.')
+                                        dictParameters[name][obj[0]]["priorities"][transition[1]][param[0]] = replacedDotValue
+                                    else:
+                                        dictParameters[name][obj[0]]["priorities"][transition[1]][param[0]] = value[0]
                             else:
                                 default_priority=getDefaultObjectivePriority(obj[1],transition[5],param[3])
                                 for value in default_priority:
-                                    print()
-                                    # Descomentar cuando se corrija error de espacios en blanco en la tabla de lA BD
-                                    # dictParameters[name][obj[0]]["priorities"][transition[1]][param[0]] = value[0]
+                                    if (',' in value[0]):
+                                        replacedDotValue=value[0].replace(',','.')
+                                        dictParameters[name][obj[0]]["priorities"][transition[1]][param[0]] = replacedDotValue
+                                    else:
+                                        dictParameters[name][obj[0]]["priorities"][transition[1]][param[0]] = value[0]
                             
-                            dictParameters[name][obj[0]]["priorities"][transition[1]][param[0]] = 0
+                            # dictParameters[name][obj[0]]["priorities"][transition[1]][param[0]] = '~0.25'
 
                     dictParameters[name][obj[0]]["factors"] = {}
 
