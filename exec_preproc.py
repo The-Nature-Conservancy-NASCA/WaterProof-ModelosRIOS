@@ -256,16 +256,16 @@ def getConstantFromBasin(basin, constantName):
 # Cortar raster
 
 
-def cutRaster(catchment, path, out_path):
+def cutRaster(catchment, path, out_path, cut_raster_name):
     data = rasterio.open(path)
     with fiona.open(catchment, "r") as shapefile:
         shapes = [feature["geometry"] for feature in shapefile]
 
     with rasterio.open(path) as src:
-        if 'Stream' in path or 'Soil_Depth' in path:
+        nd = -999
+        if 'Stream' in path or 'Soil_Depth' in path or 'int' in src.dtypes[0]:
             nd = 255
-        else:
-            nd = -999
+        
 
         out_image, out_transform = mask(src, shapes, crop=True, nodata=nd)
         out_meta = src.meta
@@ -278,29 +278,12 @@ def cutRaster(catchment, path, out_path):
                      "transform": out_transform,
                      "nodata": nd})
 
-    # if "RainfallDay" not in path:
-    #     out_meta.update({"driver": "GTiff",
-    #             "height": out_image.shape[1],
-    #             "width": out_image.shape[2],
-    #             "transform": out_transform,
-    #             "nodata":-9999})
-
-    # if "Stream" in path:
-    #     out_meta.update({"driver": "GTiff",
-    #         "height": out_image.shape[1],
-    #         "width": out_image.shape[2],
-    #         "transform": out_transform,
-    #         "nodata":-9999})
-    # else:
-    #     out_meta.update({"driver": "GTiff",
-    #     "height": out_image.shape[1],
-    #     "width": out_image.shape[2],
-    #     "transform": out_transform})
-
-    with rasterio.open(os.path.join(out_path, os.path.basename(path)), "w", **out_meta) as dest:
+    if (cut_raster_name == ''):
+        cut_raster_name = os.path.basename(path)
+    with rasterio.open(os.path.join(out_path, cut_raster_name), "w", **out_meta) as dest:
         dest.write(out_image)
 
-    return os.path.join(out_path, os.path.basename(path))
+    return os.path.join(out_path, cut_raster_name)
 
 # Procesar parametros
 
@@ -353,7 +336,15 @@ def processParameters(parametersList, basin,id_catchment, studyCase,catchment, p
         if(empty):
             value = ''
         if(cut):
-            value = cutRaster(catchment, value, in_path)
+            
+            cut_raster_name = os.path.basename(value)
+            if ('LandCoverResampling' in value):
+                analysis_period = analysisPeriodFromStudyCase(studyCase)
+                value_last_year = value.replace('Resampling', '/YEAR_%s' %(analysis_period))
+                cut_raster_name_future = cut_raster_name.replace('.tif', '_FUTURE.tif')
+                cutRaster(catchment, value_last_year, in_path, cut_raster_name_future)
+
+            value = cutRaster(catchment, value, in_path, cut_raster_name)
             catchment_out = catchment
         if(file):
             value = catchment
@@ -364,7 +355,7 @@ def processParameters(parametersList, basin,id_catchment, studyCase,catchment, p
             label = region[4]
             maxMonth, outRaster = calculateRainfallDayMonth(
                 value, catchment, label)
-            value = cutRaster(catchment, outRaster, in_path)
+            value = cutRaster(catchment, outRaster, in_path,os.path.basename(outRaster))
         if(inputUser):
             value = inputs[name]
         if(bio_param):
@@ -434,11 +425,10 @@ def processParameters(parametersList, basin,id_catchment, studyCase,catchment, p
 
 
 def executeFunction(basin, id_catchment, id_usuario, inputs,id_case):
-    date = datetime.date.today()
+    today = datetime.date.today()
     # path = os.path.join("/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp",str(id_usuario) +  "_" + str(date.year) + "_" + str(date.month) + "_" + str(date.day))
     # path = os.path.join("data","wpdev","salidas",str(id_usuario) +  "_" + str(date.year) + "_" + str(date.month) + "_" + str(date.day))
-    path = os.path.join(ruta, "salidas", str(id_usuario) + "_" +
-                        str(date.year) + "_" + str(date.month) + "_" + str(date.day))
+    path = os.path.join(ruta, "salidas", "%s_%s_%s-%s-%s" % (int(id_usuario), int(id_case), today.year, today.month, today.day))
     pathPreprocIn = os.path.join(path, "in", "02-PREPROC_RIOS")
     pathPreprocOut = os.path.join(path, "out", "02-PREPROC_RIOS")
     pathCatchment = os.path.join(path, "in", "catchment")
@@ -545,3 +535,17 @@ def executeFunction(basin, id_catchment, id_usuario, inputs,id_case):
 # # print(out_path)
 # # print(parameters)
 # executeFunction(44,[3],1,inputs)
+
+def analysisPeriodFromStudyCase(id):
+	print("analysisPeriodFromStudyCase - id::%s" % id)
+	conn = connect('postgresql_alfa')
+	cursor = conn.cursor()
+	sql = "select analysis_period_value from public.waterproof_study_cases_studycases where id = %s" % id
+	cursor.execute(sql)
+	year = 1
+	try:
+		row = cursor.fetchone()
+		year = row[0]
+	except:
+		year=-1
+	return year
