@@ -424,30 +424,25 @@ def processParameters(parametersList, basin,id_catchment, studyCase,catchment, p
         return dictParameters, out_path, catchment_out
 
 
-def executeFunction(basin, id_catchment, id_usuario, inputs,id_case):
+def executeFunction(basin, id_catchment, id_usuario, inputs,id_case,catchmentDir):
     today = datetime.date.today()
     # path = os.path.join("/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp",str(id_usuario) +  "_" + str(date.year) + "_" + str(date.month) + "_" + str(date.day))
     # path = os.path.join("data","wpdev","salidas",str(id_usuario) +  "_" + str(date.year) + "_" + str(date.month) + "_" + str(date.day))
     path = os.path.join(ruta, "salidas", "%s_%s_%s-%s-%s" % (int(id_usuario), int(id_case), today.year, today.month, today.day))
-    pathPreprocIn = os.path.join(path, "in", "02-PREPROC_RIOS")
-    pathPreprocOut = os.path.join(path, "out", "02-PREPROC_RIOS")
-    pathCatchment = os.path.join(path, "in", "catchment")
+    pathPreprocIn = os.path.join(path,catchmentDir, "in", "02-PREPROC_RIOS")
+    pathPreprocOut = os.path.join(path,catchmentDir, "out", "02-PREPROC_RIOS")
+    pathCatchment = os.path.join(path,catchmentDir, "in", "catchment")
 
     #print(inputs)
 
     isdir = os.path.isdir(path)
     if(not isdir):
         os.mkdir(path)
-        os.mkdir(os.path.join(path, "in"))
-        os.mkdir(os.path.join(path, "out"))
-
-    isdir = os.path.isdir(os.path.join(path, "in"))
+    isdir = os.path.isdir(os.path.join(path, catchmentDir))
     if(not isdir):
-        os.mkdir(os.path.join(path, "in"))
-
-    isdir = os.path.isdir(os.path.join(path, "out"))
-    if(not isdir):
-        os.mkdir(os.path.join(path, "out"))
+        os.mkdir(os.path.join(path, catchmentDir))
+        os.mkdir(os.path.join(path,catchmentDir, "in"))
+        os.mkdir(os.path.join(path, catchmentDir,"out"))
 
     isdir = os.path.isdir(pathPreprocIn)
     if(not isdir):
@@ -460,8 +455,9 @@ def executeFunction(basin, id_catchment, id_usuario, inputs,id_case):
     isdir = os.path.isdir(pathCatchment)
     if(not isdir):
         os.mkdir(pathCatchment)
-
+   
     list = getParameters(basin, 'preprocRIOS')
+    path = os.path.join(path,catchmentDir)
     catchment = exportToShp(id_catchment, path)
     parameters, out_path, catchmentOut = processParameters(
         list, basin,id_catchment,id_case, catchment, path, inputs, id_usuario,)

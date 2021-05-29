@@ -82,13 +82,13 @@ def execPreproc():
     catchment = str(catchmentList[0])
     basinQuery = exec_preproc.getCatchmentBasin(catchment)
     basin = str(basinQuery[0])
-
+    catchmentDir='WI_'+catchment
     today = datetime.date.today()
-    out_directory = "%s_%s_%s-%s-%s" % (int(id_usuario), int(id_case), today.year, today.month, today.day)
+    out_directory = "%s_%s_%s-%s-%s/%s" % (int(id_usuario), int(id_case), today.year, today.month, today.day,catchmentDir)
 
     print(":::BASIN:::")
     print(basin)
-    obj, outputPath, catchmentOut = exec_preproc.executeFunction(basin, catchment, id_usuario, inputs,id_case)
+    obj, outputPath, catchmentOut = exec_preproc.executeFunction(basin, catchment, id_usuario, inputs,id_case,catchmentDir)
     list_parameters = getParameters(basin, 'rios')
     print("::CATCHMENT OUT:::")
     print(catchmentOut)
@@ -127,9 +127,6 @@ def execPreproc():
     
     parameters, out_path = processParameters(
         nbsList,list_parameters, catchment,id_case,basin, process_path, id_usuario, listObjs, obj, outputPath, catchmentOut)
-        
-    print(":::PARAMETERS::::")
-    print(parameters)
 
     execModel(parameters)
     with (open(process_path + 'exec_rios_parameters.json', 'w')) as fp:
