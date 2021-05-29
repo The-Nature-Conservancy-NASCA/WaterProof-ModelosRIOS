@@ -1,5 +1,5 @@
 from flask import Flask
-from exec_preproc import executeFunction,getStudyCaseCatchments,getCatchmentBasin,getStudyCaseNbs,getStudyCaseObjectives
+import exec_preproc
 from execRIOS import getParameters,processParameters,execModel
 from flask import request
 from flask import jsonify
@@ -26,7 +26,8 @@ def welcome():
 def execPreproc():
     id_usuario = request.args.get('id_usuario')
     id_case = request.args.get('id_case')
-    studyCases_objectives=getStudyCaseObjectives(id_case)
+    studyCases_objectives = exec_preproc.getStudyCaseObjectives(id_case)
+    
     objectives={
         'do_erosion':False,
         'do_nutrient_p': False,
@@ -71,24 +72,23 @@ def execPreproc():
     logging.debug('debug message')
     inputs = {"do_erosion": bool(do_erosion), "do_nutrient_p": bool(do_np), "do_nutrient_n": bool(
         do_nn), "do_flood": bool(do_flood), "do_gw_bf": bool(do_gw_bf)}
-    catchments = getStudyCaseCatchments(id_case)
-    nbsList = getStudyCaseNbs(id_case)
+    catchments = exec_preproc.getStudyCaseCatchments(id_case)
+    nbsList = exec_preproc.getStudyCaseNbs(id_case)
     print("NBS List")
     print(nbsList)
     catchmentList = []
     for catch in catchments:
         catchmentList.append(catch[0])
     catchment = str(catchmentList[0])
-    basinQuery = getCatchmentBasin(catchment)
+    basinQuery = exec_preproc.getCatchmentBasin(catchment)
     basin = str(basinQuery[0])
 
     today = datetime.date.today()
-    out_directory = "%s-%s-%s-%s-%s-%s" % (int(id_usuario), int(
-        id_case), int(catchment), today.year, today.month, today.day)
+    out_directory = "%s_%s_%s-%s-%s" % (int(id_usuario), int(id_case), today.year, today.month, today.day)
 
     print(":::BASIN:::")
     print(basin)
-    obj, outputPath, catchmentOut = executeFunction(basin, catchment, id_usuario, inputs,id_case)
+    obj, outputPath, catchmentOut = exec_preproc.executeFunction(basin, catchment, id_usuario, inputs,id_case)
     list_parameters = getParameters(basin, 'rios')
     print("::CATCHMENT OUT:::")
     print(catchmentOut)
@@ -139,15 +139,15 @@ def execPreproc():
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36',
     }
 
-    base_url_api = 'http://dev.skaphe.com:8000/'
-    #base_url_api = 'http://wfapp_py3_container:8000/'
+    #base_url_api = 'http://dev.skaphe.com:8000/'
+    base_url_api = 'http://wfapp_py3_container:8000/'
     url = base_url_api + 'cobTrans'
 
     first_nbs = nbsList[0]
     parameters = {
-        'pathCobs': process_path + '/out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios/continuous_activity_portfolios',
+        'pathCobs': process_path + 'out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios/continuous_activity_portfolios',
         'nbs_id': first_nbs,
-        'pathLULC': process_path + '/in/04-RIOS/LULC_SA_1.tif'
+        'pathLULC': process_path + 'in/04-RIOS/LULC_SA_1.tif'
     }
 
     data = makeGetRequest(url, parameters, 5, headers)
