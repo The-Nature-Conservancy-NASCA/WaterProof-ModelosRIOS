@@ -88,7 +88,7 @@ def execPreproc():
 
     print(":::BASIN:::")
     print(basin)
-    obj, outputPath, catchmentOut = exec_preproc.executeFunction(basin, catchment, id_usuario, inputs,id_case,catchmentDir)
+    obj, outputPath, catchmentOut,pcp_label = exec_preproc.executeFunction(basin, catchment, id_usuario, inputs,id_case,catchmentDir)
     list_parameters = getParameters(basin, 'rios')
     print("::CATCHMENT OUT:::")
     print(catchmentOut)
@@ -126,7 +126,7 @@ def execPreproc():
         os.mkdir(process_path + 'in')
     
     parameters, out_path = processParameters(
-        nbsList,list_parameters, catchment,id_case,basin, process_path, id_usuario, listObjs, obj, outputPath, catchmentOut)
+        nbsList,list_parameters, catchment,id_case,basin, process_path, id_usuario, listObjs, obj, outputPath, catchmentOut,pcp_label)
 
     execModel(parameters)
     with (open(process_path + 'exec_rios_parameters.json', 'w')) as fp:

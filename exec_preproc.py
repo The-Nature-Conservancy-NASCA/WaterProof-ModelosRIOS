@@ -42,7 +42,8 @@ objectivesDict = {
         'Downslope retention index': 'flood_downslope_retention_index_{0}.tif',
         'Upslope source': 'flood_upslope_source_{0}.tif',
         'Slope Index': 'flood_slope_index_{0}.tif',
-        'Riparian continuity': 'flood_riparian_index_{0}.tif'
+        'Riparian continuity': 'flood_riparian_index_{0}.tif',
+        'Rainfall depth':'Pcp_{0}_{1}.tif'
     },
     'do_gw_bf': {
         'Downslope retention index': 'erosion_downslope_retention_index_{0}.tif',
@@ -179,8 +180,6 @@ def getStudyCaseCatchments(caseStudy):
     cursor.callproc('__wp_get_studyCase_catchments', [caseStudy])
     result = cursor.fetchall()
     for row in result:
-        print("Row")
-        print(row)
         listResult.append(row)
     return listResult
 
@@ -209,8 +208,6 @@ def getStudyCaseNbs(caseStudy):
     cursor.callproc('__wp_get_studycase_nbs', [caseStudy])
     result = cursor.fetchall()
     for row in result:
-        print("Row")
-        print(row)
         listResult.append(row)
     return listResult
 
@@ -421,7 +418,7 @@ def processParameters(parametersList, basin,id_catchment, studyCase,catchment, p
         # dictParameters[name] = value
         # print(value)
 
-        return dictParameters, out_path, catchment_out
+        return dictParameters, out_path, catchment_out,maxMonth
 
 
 def executeFunction(basin, id_catchment, id_usuario, inputs,id_case,catchmentDir):
@@ -459,7 +456,7 @@ def executeFunction(basin, id_catchment, id_usuario, inputs,id_case,catchmentDir
     list = getParameters(basin, 'preprocRIOS')
     path = os.path.join(path,catchmentDir)
     catchment = exportToShp(id_catchment, path)
-    parameters, out_path, catchmentOut = processParameters(
+    parameters, out_path, catchmentOut,pcp_label = processParameters(
         list, basin,id_catchment,id_case, catchment, path, inputs, id_usuario,)
 
     logger.debug("parameters :: %s", parameters)
@@ -499,7 +496,7 @@ def executeFunction(basin, id_catchment, id_usuario, inputs,id_case,catchmentDir
              do_gw_bf=parameters["do_gw_bf"],
              river_buffer_dist=int(parameters["river_buffer_dist"]))  # Buffer
 
-    return objectives, parameters["output_path"], catchmentOut
+    return objectives, parameters["output_path"], catchmentOut,pcp_label
 
 # def executeFunction(basin,model,type,id_catchment,id_usuario):
 # 	date = datetime.date.today()

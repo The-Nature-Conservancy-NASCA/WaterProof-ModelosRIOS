@@ -417,15 +417,17 @@ def getStudyCaseBudget(id_case):
     return listResult
 
 # Procesar parametros
-def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pathF, user, objectives, inputs_objs, outPreProc, catchment):
+def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pathF, user, objectives, inputs_objs, outPreProc, catchment,pcp_label):
     # def processParameters(parametersList, basin, catchment,pathF, user):
     dictParameters = dict()
     default = 'y'
     out_path = ""
     in_path = ""
     out_folder = parametersList[0][9]
+    in_folder='02-PREPROC_RIOS'
     out_path = os.path.join(os.getcwd(), pathF, 'out', out_folder)
     in_path = os.path.join(os.getcwd(), pathF, 'in', out_folder)
+    in_preProc=os.path.join(os.getcwd(), pathF, 'in', in_folder)
 
     measurement_value = 10000
     measurement_unit = "area"
@@ -707,12 +709,15 @@ def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pat
                             dictParameters[name][obj[0]]["factors"][param[0]
                                                                     ]["bins"]["value_field"] = ranks[param[0]]
                         else:
-
                             if inputs_objs[objectives_mapping[obj[0]]].has_key(param[0]):
                                 dictParameters[name][obj[0]
                                                      ]["factors"][param[0]] = {}
-                                dictParameters[name][obj[0]]["factors"][param[0]]["raster_uri"] = os.path.join(
-                                    outPreProc, inputs_objs[objectives_mapping[obj[0]]][param[0]].format(label))
+                                if (param[0]=='Rainfall depth'):
+                                    dictParameters[name][obj[0]]["factors"][param[0]]["raster_uri"] = os.path.join(
+                                    in_preProc, inputs_objs[objectives_mapping[obj[0]]][param[0]].format(label,pcp_label))
+                                else:
+                                    dictParameters[name][obj[0]]["factors"][param[0]]["raster_uri"] = os.path.join(
+                                    outPreProc, inputs_objs[objectives_mapping[obj[0]]][param[0]].format(label,pcp_label))
                                 dictParameters[name][obj[0]
                                                      ]["factors"][param[0]]["bins"] = {}
                                 dictParameters[name][obj[0]]["factors"][param[0]
