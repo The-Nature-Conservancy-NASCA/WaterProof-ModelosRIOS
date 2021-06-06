@@ -74,144 +74,143 @@ def execPreproc():
         do_nn), "do_flood": bool(do_flood), "do_gw_bf": bool(do_gw_bf)}
     catchments = exec_preproc.getStudyCaseCatchments(id_case)
     nbsList = exec_preproc.getStudyCaseNbs(id_case)
-    print("NBS List")
-    print(nbsList)
     catchmentList = []
     for catch in catchments:
         catchmentList.append(catch[0])
-    catchment = str(catchmentList[0])
-    basinQuery = exec_preproc.getCatchmentBasin(catchment)
-    basin = str(basinQuery[0])
-    catchmentDir='WI_'+catchment
-    today = datetime.date.today()
-    out_directory = "%s_%s_%s-%s-%s/%s" % (int(id_usuario), int(id_case), today.year, today.month, today.day,catchmentDir)
+    for counter, catchment in enumerate(catchmentList):
+        catchment=str(catchment)
+        basinQuery = exec_preproc.getCatchmentBasin(catchment)
+        basin = str(basinQuery[0])
+        catchmentDir='WI_'+catchment
+        today = datetime.date.today()
+        out_directory = "%s_%s_%s-%s-%s/%s" % (int(id_usuario), int(id_case), today.year, today.month, today.day,catchmentDir)
 
-    print(":::BASIN:::")
-    print(basin)
-    obj, outputPath, catchmentOut,pcp_label = exec_preproc.executeFunction(basin, catchment, id_usuario, inputs,id_case,catchmentDir)
-    list_parameters = getParameters(basin, 'rios')
-    print("::CATCHMENT OUT:::")
-    print(catchmentOut)
-    listObjs = []
+        print(":::BASIN:::")
+        print(basin)
+        obj, outputPath, catchmentOut,pcp_label = exec_preproc.executeFunction(basin, catchment, id_usuario, inputs,id_case,catchmentDir)
+        list_parameters = getParameters(basin, 'rios')
+        print("::CATCHMENT OUT:::")
+        print(catchmentOut)
+        listObjs = []
 
-    if do_erosion:
-        listObjs.append(2)
-        listObjs.append(3)
+        if do_erosion:
+            listObjs.append(2)
+            listObjs.append(3)
 
-    if do_np:
-        listObjs.append(5)
+        if do_np:
+            listObjs.append(5)
 
-    if do_nn:
-        listObjs.append(4)
+        if do_nn:
+            listObjs.append(4)
 
-    if do_flood:
-        listObjs.append(6)
+        if do_flood:
+            listObjs.append(6)
 
-    if do_gw_bf:
-        listObjs.append(7)
-        listObjs.append(8)
+        if do_gw_bf:
+            listObjs.append(7)
+            listObjs.append(8)
 
-    process_path = "/home/skaphe/Documentos/tnc/modelos/salidas/%s/" % (
-        out_directory)
-    isdir = os.path.isdir(process_path)
-    if(not isdir):
-        os.mkdir(process_path)
+        process_path = "/home/skaphe/Documentos/tnc/modelos/salidas/%s/" % (
+            out_directory)
+        isdir = os.path.isdir(process_path)
+        if(not isdir):
+            os.mkdir(process_path)
 
-    isdir = os.path.isdir(process_path + 'out')
-    if(not isdir):
-        os.mkdir(process_path + 'out')
+        isdir = os.path.isdir(process_path + 'out')
+        if(not isdir):
+            os.mkdir(process_path + 'out')
 
-    isdir = os.path.isdir(process_path + 'in')
-    if(not isdir):
-        os.mkdir(process_path + 'in')
-    
-    parameters, out_path = processParameters(
-        nbsList,list_parameters, catchment,id_case,basin, process_path, id_usuario, listObjs, obj, outputPath, catchmentOut,pcp_label)
+        isdir = os.path.isdir(process_path + 'in')
+        if(not isdir):
+            os.mkdir(process_path + 'in')
+        
+        parameters, out_path = processParameters(
+            nbsList,list_parameters, catchment,id_case,basin, process_path, id_usuario, listObjs, obj, outputPath, catchmentOut,pcp_label)
 
-    execModel(parameters)
-    with (open(process_path + 'exec_rios_parameters.json', 'w')) as fp:
-        json.dump(parameters, fp)
+        execModel(parameters)
+        with (open(process_path + 'exec_rios_parameters.json', 'w')) as fp:
+            json.dump(parameters, fp)
 
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36',
-    }
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36',
+        }
 
-    #base_url_api = 'http://dev.skaphe.com:8000/'
-    base_url_api = 'http://wfapp_py3_container:8000/'
-    url = base_url_api + 'cobTrans'
+        #base_url_api = 'http://dev.skaphe.com:8000/'
+        base_url_api = 'http://wfapp_py3_container:8000/'
+        url = base_url_api + 'cobTrans'
+        for nbs in nbsList:
+            print(nbs)
+            parameters = {
+                'pathCobs': process_path + 'out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios/continuous_activity_portfolios',
+                'nbs_id': nbs,
+                'pathLULC': process_path + 'in/04-RIOS/LULC_SA_1.tif'
+            }
 
-    first_nbs = nbsList[0]
-    parameters = {
-        'pathCobs': process_path + 'out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios/continuous_activity_portfolios',
-        'nbs_id': first_nbs,
-        'pathLULC': process_path + 'in/04-RIOS/LULC_SA_1.tif'
-    }
+            data = makeGetRequest(url, parameters, 5, headers)
 
-    data = makeGetRequest(url, parameters, 5, headers)
+            ''' Exec Invest '''
+            logger.debug("*** Execute Invest ***")
+            url = base_url_api + 'execInvest'
+            ''' 1. type == current '''
+            parameters = {
+                'type': 'current',
+                'id_usuario': id_usuario,
+                'basin': basin,
+                'models': ['sdr', 'awy', 'ndr'],
+                'catchment': catchment,
+                'carbon': 'y',
+                'case': id_case
+            }
+            logger.debug("1. Execute Invest (Current)")
+            try:
+                data_exec_invest_current = makeGetRequest(url, parameters, 5, headers)
+            except:
+                logger.warning("error executing::  %s", url)
 
-    ''' Exec Invest '''
-    logger.debug("*** Execute Invest ***")
-    url = base_url_api + 'execInvest'
-    ''' 1. type == current '''
-    parameters = {
-        'type': 'current',
-        'id_usuario': id_usuario,
-        'basin': basin,
-        'models': ['sdr', 'awy', 'ndr'],
-        'catchment': catchment,
-        'carbon': 'y',
-        'case': id_case
-    }
-    logger.debug("1. Execute Invest (Current)")
-    try:
-        data_exec_invest_current = makeGetRequest(url, parameters, 5, headers)
-    except:
-        logger.warning("error executing::  %s", url)
+            #''' 2. type == currentCarbon '''
+            # parameters['type'] = 'currentCarbon'
 
-    #''' 2. type == currentCarbon '''
-    # parameters['type'] = 'currentCarbon'
+            # try:
+            # 	data_exec_invest_current_carbon = makeGetRequest(url,parameters,5,headers)
+            # except:
+            # 	logger.warning("error executing::  %s", url)
 
-    # try:
-    # 	data_exec_invest_current_carbon = makeGetRequest(url,parameters,5,headers)
-    # except:
-    # 	logger.warning("error executing::  %s", url)
+            ''' 2. type == BaU '''
+            # campo analysis_period_value de study_cases
+            parameters['type'] = 'BaU'
+            logger.debug("2. Execute Invest (BaU) ")
+            try:
+                data_exec_invest_current = makeGetRequest(url, parameters, 5, headers)
+            except:
+                logger.warning("error executing::  %s", url)
 
-    ''' 2. type == BaU '''
-    # campo analysis_period_value de study_cases
-    parameters['type'] = 'BaU'
-    logger.debug("2. Execute Invest (BaU) ")
-    try:
-        data_exec_invest_current = makeGetRequest(url, parameters, 5, headers)
-    except:
-        logger.warning("error executing::  %s", url)
+            ''' Ejecutar Carbon para BaU'''
 
-    ''' Ejecutar Carbon para BaU'''
+            ''' 4. type == NBS '''
+            # campo analysis_period_value de study_cases
+            # try:
+            # 	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+            # except:
+            # 	logger.warning("error executing::  %s", url)
 
-    ''' 4. type == NBS '''
-    # campo analysis_period_value de study_cases
-    # try:
-    # 	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
-    # except:
-    # 	logger.warning("error executing::  %s", url)
+            ''' Ejecutar Carbon para NBS'''
 
-    ''' Ejecutar Carbon para NBS'''
+            # TODO :: Evaluar si se puede optimizar execInvest adicionando los llamador a 'Carbon' directamente en current, BaU y NBS
 
-    # TODO :: Evaluar si se puede optimizar execInvest adicionando los llamador a 'Carbon' directamente en current, BaU y NBS
+            # TODO :: Ejecutar desagregacion
 
-    # TODO :: Ejecutar desagregacion
+            # TODO :: Ejecutar WB
 
-    # TODO :: Ejecutar WB
+            # TODO :: Ejecutar Cost Functions
 
-    # TODO :: Ejecutar Cost Functions
+            # TODO :: Ejecutar ROI
 
-    # TODO :: Ejecutar ROI
+            #
 
-    #
-
-    print(data)
-
-    return "Exito"
-    # user = request.args.get('nm')
+            print(data)
+            if (counter==len(catchmentList)-1):
+                return "Exito"
+            # user = request.args.get('nm')
 
 
 def str2bool(v):
