@@ -12,3 +12,4 @@ flask==1.0
 gdal==2.4.4
 scipy
 requests
+AdvancedHTMLParser
