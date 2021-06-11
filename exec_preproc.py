@@ -16,6 +16,8 @@ import ogr
 import osr
 import datetime
 import json
+import AdvancedHTMLParser 
+from AdvancedHTMLParser import AdvancedTag
 from rasterio.mask import mask
 from zonalStatistics import calculateRainfallDayMonth, calculateStatistic
 from createBioParamCsv import getColsParams, generateCsv, getDefaultBiophysicParams,getUserBiophysicParams
@@ -542,3 +544,87 @@ def analysisPeriodFromStudyCase(id):
 	except:
 		year=-1
 	return year
+
+""" Function to get All Years budget from IPA Report(Rios Portfolio)"""
+""" using AdvancedHTMLParser return all the elements with className = budget_year """
+def parse_to_get_ipa_report(path_file,catchment,id_case,id_usuario):
+    path_file=path_file+"/1_investment_portfolio_adviser_workspace/html_report/ipa_report.html"
+    class_name = "budget_year"
+    f = open(path_file, 'r')
+    html = f.read()
+    parser = AdvancedHTMLParser.AdvancedHTMLParser()
+    parser.parseStr(html)
+    budget_years = parser.getElementsByClassName(class_name)
+    conn = connect('postgresql_alfa')
+    cursor = conn.cursor()
+    today = datetime.date.today()
+    date=str(today.year)+'-'+str(today.month)+'-'+str(today.day)
+    allYear_quant=len(budget_years[2].children[1].children)-1
+    allYear_counter=1
+    year=9999
+    #-------------------------
+    # All Years budget totals
+    #------------------------
+    while allYear_counter<=allYear_quant:
+        allYear_values=budget_years[2].children[1].children[allYear_counter].children
+        # FLoating budget
+        if (allYear_counter==1):
+            sbn=str(allYear_values[0].innerText)
+            actual_spent=0
+            total_budget=float(allYear_values[2].innerText)
+            area_converted=0
+            cursor.callproc('__wp_insert_rios_report', [year,sbn,actual_spent,total_budget,area_converted,date,int(catchment),int(id_case),int(id_usuario)]) 
+            conn.commit()
+        # Activity values
+        else:
+            sbn=str(allYear_values[0].innerText)
+            if (sbn.find('(')>0):
+                sbn_split=sbn.split(' ')
+                sbn=sbn_split[0]
+            actual_spent=float(allYear_values[1].innerText)
+            total_budget=float(allYear_values[2].innerText)
+            area_converted=float(allYear_values[3].innerText)
+            cursor.callproc('__wp_insert_rios_report', [year,sbn,actual_spent,total_budget,area_converted,date,int(catchment),int(id_case),int(id_usuario)]) 
+            conn.commit()
+        allYear_counter=allYear_counter+1
+    years_quant=len(budget_years)-1
+    counter=1
+    #-----------------
+    # Each Year Budget
+    #------------------
+    while counter<=years_quant:
+        ipa_year='ipa_year_'+str(counter)
+        budget_year_tag=parser.getElementById(ipa_year)
+        budget_year_values=budget_year_tag.children[1].children
+        budget_year_quant=len(budget_year_values)-1
+        year_counter=1
+        while year_counter<=budget_year_quant:
+            # Floating budget values
+            if (year_counter==1):
+                year=counter
+                sbn=str(budget_year_values[year_counter].children[0].innerText)
+                actual_spent=0
+                total_budget=float(budget_year_values[year_counter].children[2].innerText)
+                area_converted=0
+                cursor = conn.cursor()
+                cursor.callproc('__wp_insert_rios_report', [year,sbn,actual_spent,total_budget,area_converted,date,int(catchment),int(id_case),int(id_usuario)]) 
+                conn.commit()
+            # Activities values
+            else:
+                year=counter
+                sbn=str(budget_year_values[year_counter].children[0].innerText)
+                if (sbn.find('(')>0):
+                    sbn_split=sbn.split(' ')
+                    sbn=sbn_split[0]
+                actual_spent=float(budget_year_values[year_counter].children[1].innerText)
+                total_budget=float(budget_year_values[year_counter].children[2].innerText)
+                area_converted=float(budget_year_values[year_counter].children[3].innerText)
+                cursor = conn.cursor()
+                cursor.callproc('__wp_insert_rios_report', [year,sbn,actual_spent,total_budget,area_converted,date,int(catchment),int(id_case),int(id_usuario)]) 
+                conn.commit()
+            year_counter=year_counter+1
+        counter=counter+1
+    f.close()
+    cursor.close()
+    conn.close()
+    return "Ipa Report Ready"
