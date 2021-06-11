@@ -138,15 +138,15 @@ def execPreproc():
         base_url_api = 'http://dev.skaphe.com:8000/'
         #base_url_api = 'http://wfapp_py3_container:8000/'
         url = base_url_api + 'cobTrans'
-        # for nbs in nbsList:
-        #     print(nbs)
-        #     parameters = {
-        #         'pathCobs': process_path + 'out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios/continuous_activity_portfolios',
-        #         'nbs_id': nbs,
-        #         'pathLULC': process_path + 'in/04-RIOS/LULC_SA_1.tif'
-        #     }
+        for nbs in nbsList:
+            print(nbs)
+            parameters = {
+                'pathCobs': process_path + 'out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios/continuous_activity_portfolios',
+                'nbs_id': nbs,
+                'pathLULC': process_path + 'in/04-RIOS/LULC_SA_1.tif'
+            }
 
-        #     data = makeGetRequest(url, parameters, 5, headers)
+            data = makeGetRequest(url, parameters, 5, headers)
 
         #     ''' Exec Invest '''
         #     logger.debug("*** Execute Invest ***")
