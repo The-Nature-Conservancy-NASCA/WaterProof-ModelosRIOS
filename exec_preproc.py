@@ -159,6 +159,14 @@ def resamplingRaster(templatePath, srcPath, out):
 
     print("finish")
 
+def getStudyCasePtaps(studycase_id):
+    conn = connect('postgresql_alfa')
+    cursor = conn.cursor()
+    sql = "select header_id from public.waterproof_study_cases_studycases_ptaps where studycases_id = %s" % studycase_id
+    cursor.execute(sql)
+    result = cursor.fetchall()    
+    cursor.close()
+    return result
 
 def getStudyCaseObjectives(id_case):
     result = ''

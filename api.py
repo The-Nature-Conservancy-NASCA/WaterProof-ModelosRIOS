@@ -74,9 +74,13 @@ def execPreproc():
         do_nn), "do_flood": bool(do_flood), "do_gw_bf": bool(do_gw_bf)}
     catchments = exec_preproc.getStudyCaseCatchments(id_case)
     nbsList = exec_preproc.getStudyCaseNbs(id_case)
+    ptaps=exec_preproc.getStudyCasePtaps(id_case)
     catchmentList = []
+    ptapList=[]
     for catch in catchments:
         catchmentList.append(catch[0])
+    for ptap in ptaps:
+        ptapList.append(ptap[0])
     for counter, catchment in enumerate(catchmentList):
         catchment=str(catchment)
         basinQuery = exec_preproc.getCatchmentBasin(catchment)
@@ -134,89 +138,145 @@ def execPreproc():
         headers = {
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36',
         }
-
+        #------------------------#
+        # TRADUCTOR DE COBERTURAS
+        #------------------------#
         base_url_api = 'http://dev.skaphe.com:8000/'
-        #base_url_api = 'http://wfapp_py3_container:8000/'
+        #base_url_api = 'http://localhost:8000/'
         url = base_url_api + 'cobTrans'
-        for nbs in nbsList:
-            print(nbs)
-            parameters = {
-                'pathCobs': process_path + 'out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios/continuous_activity_portfolios',
-                'nbs_id': nbs,
-                'pathLULC': process_path + 'in/04-RIOS/LULC_SA_1.tif'
-            }
+        first_nbs=nbsList[0]
+        parameters = {
+            'pathCobs': process_path + 'out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios/continuous_activity_portfolios',
+            'nbs_id': first_nbs,
+            'pathLULC': process_path + 'in/04-RIOS/LULC_SA_1.tif'
+        }
+        data = makeGetRequest(url, parameters, 5, headers)
 
-            data = makeGetRequest(url, parameters, 5, headers)
+        #-----------------------#
+        #  EJECUCION DE INVEST  #
+        #-----------------------#
+        logger.debug("*** Execute Invest ***")
+        url = base_url_api + 'execInvest'
+        ''' 1. TYPE: CURRENT'''
+        parameters = {
+                'type': 'current',
+                'id_usuario': id_usuario,
+                'basin': basin,
+                'models': ['sdr', 'awy', 'ndr','carbon','swy'],
+                'catchment': catchment,
+                'case': id_case
+        }
+        logger.debug("1. Execute Invest (Current)")
+        try:
+            data_exec_invest_current = makeGetRequest(url, parameters, 5, headers)
+            print(data_exec_invest_current)
+        except requests.exceptions.HTTPError as e:
+            print (e.response.text)
+            logger.warning("error executing::  %s", url)
 
-        #     ''' Exec Invest '''
-        #     logger.debug("*** Execute Invest ***")
-        #     url = base_url_api + 'execInvest'
-        #     ''' 1. type == current '''
-        #     parameters = {
-        #         'type': 'current',
-        #         'id_usuario': id_usuario,
-        #         'basin': basin,
-        #         'models': ['sdr', 'awy', 'ndr'],
-        #         'catchment': catchment,
-        #         'carbon': 'y',
-        #         'case': id_case
-        #     }
-        #     logger.debug("1. Execute Invest (Current)")
-        #     try:
-        #         data_exec_invest_current = makeGetRequest(url, parameters, 5, headers)
-        #     except:
-        #         logger.warning("error executing::  %s", url)
+        #''' 2. type == currentCarbon '''
+        # parameters['type'] = 'currentCarbon'
 
-        #     #''' 2. type == currentCarbon '''
-        #     # parameters['type'] = 'currentCarbon'
+        # try:
+        # 	data_exec_invest_current_carbon = makeGetRequest(url,parameters,5,headers)
+        # except:
+        # 	logger.warning("error executing::  %s", url)
 
-        #     # try:
-        #     # 	data_exec_invest_current_carbon = makeGetRequest(url,parameters,5,headers)
-        #     # except:
-        #     # 	logger.warning("error executing::  %s", url)
+        ''' 2. TYPE: BaU '''
+        # campo analysis_period_value de study_cases
+        parameters['type'] = 'BaU'
+        logger.debug("2. Execute Invest (BaU) ")
+        try:
+            data_exec_invest_current = makeGetRequest(url, parameters, 5, headers)
+        except:
+            logger.warning("error executing::  %s", url)
 
-        #     ''' 2. type == BaU '''
-        #     # campo analysis_period_value de study_cases
-        #     parameters['type'] = 'BaU'
-        #     logger.debug("2. Execute Invest (BaU) ")
-        #     try:
-        #         data_exec_invest_current = makeGetRequest(url, parameters, 5, headers)
-        #     except:
-        #         logger.warning("error executing::  %s", url)
+        # ''' Ejecutar Carbon para BaU'''
 
-        #     ''' Ejecutar Carbon para BaU'''
+        ''' 3. TYPE: NBS '''
+        # campo analysis_period_value de study_cases
+        parameters['type'] = 'NBS'
+        try:
+        	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+        except:
+        	logger.warning("error executing::  %s", url)
 
-        #     ''' 4. type == NBS '''
-        #     # campo analysis_period_value de study_cases
-        #     # try:
-        #     # 	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
-        #     # except:
-        #     # 	logger.warning("error executing::  %s", url)
+        # ''' Ejecutar Carbon para NBS'''
 
-        #     ''' Ejecutar Carbon para NBS'''
+        # # TODO :: Evaluar si se puede optimizar execInvest adicionando los llamador a 'Carbon' directamente en current, BaU y NBS
 
-        #     # TODO :: Evaluar si se puede optimizar execInvest adicionando los llamador a 'Carbon' directamente en current, BaU y NBS
+        #-------------------------#
+        # EJECUCION DESAGREGACION
+        #-------------------------#
+        url = base_url_api + 'disaggregation'
+        parameters = {
+                'id_usuario': id_usuario,
+                'basin': basin,
+                'catchment': catchment,
+                'case': id_case
+        }
+        try:
+        	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+        except:
+        	logger.warning("error executing::  %s", url)     
+        #-------------------------#
+        # EJECUCION WATER BALANCE
+        #-------------------------#
+        url = base_url_api + 'wbdisaggregationIntake'
+        parameters = {
+                'user_id': id_usuario,
+                'id_intake': catchment,
+                'study_case_id': id_case
+        }
+        try:
+        	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+        except:
+        	logger.warning("error executing::  %s", url)     
+        #-----------------------------#
+        # EJECUCION FUNCIONES DE COSTO
+        #-----------------------------#
+        url = base_url_api + 'costFunctionExecute'
+        parameters = {
+                'user_id': id_usuario,
+                'intake_id': catchment,
+                'study_case_id': id_case
+        }
+        try:
+        	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+        except:
+            logger.warning("error executing::  %s", url)
+    #---------------#
+    # MODELOS PTAP
+    #--------------#
+    for counter, ptap in enumerate(ptapList):
+        ''' 1. WB DISAGGREGATION'''
+        url = base_url_api + 'wbdisaggregationIntake'
+        parameters = {
+                'ptap_id': ptap,
+                'user_id': id_usuario,
+                'study_case_id': id_case
+        }
+        try:
+        	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+        except:
+        	logger.warning("error executing::  %s", url)    
+    #---------------#
+    # EJECUCION ROI
+    #---------------#
+    url = base_url_api + 'roiExecution'
+    parameters = {
+        'user_id': id_usuario,
+        'study_case_id': id_case
+    }
+    try:
+        data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+    except:
+        logger.warning("error executing::  %s", url)    
 
-        #     # TODO :: Ejecutar desagregacion
-
-        #     # TODO :: Ejecutar WB
-
-        #     # TODO :: Ejecutar Cost Functions
-
-        #     # TODO :: Ejecutar ROI
-
-        #     #
-
-        #     print(data)
-        #     if (counter==len(catchmentList)-1):
-        #         return "Exito"
-            # user = request.args.get('nm')
-        if (counter==len(catchmentList)-1):
-            return "Exito"
+    return "Exito"
 
 def str2bool(v):
     return v.lower() in ("true", "True")
-
 
 def makeGetRequest(url, parameters, timeout, headers):
     logger.debug("URL :: %s :: Parameters :: %s", url, parameters)
