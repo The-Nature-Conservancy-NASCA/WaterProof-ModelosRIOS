@@ -180,6 +180,18 @@ def getStudyCaseObjectives(id_case):
     cursor.close()
     return listResult
 
+# Obtener captaciones asociadas a una PTAP 
+
+def getPtapCatchmentsByStudyCase(caseStudy):
+    result = ''
+    listResult = []
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('__wp_get_ptap_catchments_by_studycase', [caseStudy])
+    result = cursor.fetchall()
+    for row in result:
+        listResult.append(row)
+    return listResult
+
 # Obtener captaciones asociadas a un caso de estudio
 
 

@@ -73,6 +73,8 @@ def execPreproc():
     inputs = {"do_erosion": bool(do_erosion), "do_nutrient_p": bool(do_np), "do_nutrient_n": bool(
         do_nn), "do_flood": bool(do_flood), "do_gw_bf": bool(do_gw_bf)}
     catchments = exec_preproc.getStudyCaseCatchments(id_case)
+    ptapCatchments=exec_preproc.getPtapCatchmentsByStudyCase(id_case)
+    catchments=catchments+ptapCatchments
     nbsList = exec_preproc.getStudyCaseNbs(id_case)
     ptaps=exec_preproc.getStudyCasePtaps(id_case)
     catchmentList = []
@@ -136,7 +138,7 @@ def execPreproc():
         # Save report ipa in BD
         exec_preproc.parse_to_get_ipa_report(out_path,catchment,id_case,id_usuario)
         headers = {
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36',
+             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36',
         }
         #------------------------#
         # TRADUCTOR DE COBERTURAS
@@ -232,25 +234,12 @@ def execPreproc():
         	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
         except:
         	logger.warning("error executing::  %s", url)     
-        #-----------------------------#
-        # EJECUCION FUNCIONES DE COSTO
-        #-----------------------------#
-        url = base_url_api + 'costFunctionExecute'
-        parameters = {
-                'user_id': id_usuario,
-                'intake_id': catchment,
-                'study_case_id': id_case
-        }
-        try:
-        	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
-        except:
-            logger.warning("error executing::  %s", url)
     #---------------#
     # MODELOS PTAP
     #--------------#
     for counter, ptap in enumerate(ptapList):
         ''' 1. WB DISAGGREGATION'''
-        url = base_url_api + 'wbdisaggregationIntake'
+        url = base_url_api + 'wbdisaggregationPTAP'
         parameters = {
                 'ptap_id': ptap,
                 'user_id': id_usuario,
@@ -259,7 +248,20 @@ def execPreproc():
         try:
         	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
         except:
-        	logger.warning("error executing::  %s", url)    
+        	logger.warning("error executing::  %s", url)   
+    #-----------------------------#
+    # EJECUCION FUNCIONES DE COSTO
+    #-----------------------------#
+    url = base_url_api + 'costFunctionExecute'
+    parameters = {
+            'user_id': id_usuario,
+            'intake_id': catchmentList[0],
+            'study_case_id': id_case
+    }
+    try:
+        data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+    except:
+        logger.warning("error executing::  %s", url)  
     #---------------#
     # EJECUCION ROI
     #---------------#
@@ -283,7 +285,6 @@ def makeGetRequest(url, parameters, timeout, headers):
     r = requests.get(url=url, params=parameters)
     data = r.json()
     return data
-
 
 if __name__ == '__main__':
     logger.debug("start debugging port :: 5678")
