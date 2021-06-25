@@ -252,7 +252,18 @@ def cutRaster(catchment, path, out_path):
 
     return os.path.join(out_path, os.path.basename(path))
 
-
+# Obtener los costos calculados para las NBS de un caso de estudi
+def getCurrencyCostCalculated(studyCase,nbsList):
+    result = ''
+    listResult = []
+    cursor = connect('postgresql_alfa').cursor()
+    cursor.callproc('__wp_get_currency_cost_calculated', [studyCase,nbsList])
+    result = cursor.fetchall()
+    for row in result:
+        # print(row)
+        listResult.append(row)
+    cursor.close()
+    return listResult
 
 # Obtener las actividades asociadas a una SBN
 
@@ -465,12 +476,21 @@ def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pat
             # print(riosType)
             if(riosType == 'activities'):
                 dictParameters[name] = {}
+                strNbsList=[]
                 listAct = getActivities(nbsList, user)
+                for nbs in nbsList:
+                    strNbsList.append(str(nbs[0]))
+                listActCurrencyCost=getCurrencyCostCalculated(id_case,strNbsList)
                 # print(listAct)
                 for la in listAct:
-                    CImple=la[1]
-                    COport=la[4]
-                    CMant=la[2]
+                    CImple=filter(lambda x: x[0]==str(la[3]) and x[1]=='unit_implementation_cost',listActCurrencyCost)
+                    CImple=CImple[0][2]
+                    #COport=la[4]
+                    COport=filter(lambda x: x[0]==str(la[3]) and x[1]=='unit_oportunity_cost',listActCurrencyCost)
+                    COport=COport[0][2]
+                    #CMant=la[2]
+                    CMant=filter(lambda x: x[0]==str(la[3]) and x[1]=='unit_maintenance_cost',listActCurrencyCost)
+                    CMant=CMant[0][2]
                     FrecMant=la[5]
                     dictParameters[name][remove_accents(la[0])] = {}
                     dictParameters[name][remove_accents(

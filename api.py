@@ -27,7 +27,6 @@ def execPreproc():
     id_usuario = request.args.get('id_usuario')
     id_case = request.args.get('id_case')
     studyCases_objectives = exec_preproc.getStudyCaseObjectives(id_case)
-    
     objectives={
         'do_erosion':False,
         'do_nutrient_p': False,
@@ -74,11 +73,24 @@ def execPreproc():
         do_nn), "do_flood": bool(do_flood), "do_gw_bf": bool(do_gw_bf)}
     catchments = exec_preproc.getStudyCaseCatchments(id_case)
     ptapCatchments=exec_preproc.getPtapCatchmentsByStudyCase(id_case)
-    catchments=catchments+ptapCatchments
+    catchments=list(set(catchments+ptapCatchments))
     nbsList = exec_preproc.getStudyCaseNbs(id_case)
     ptaps=exec_preproc.getStudyCasePtaps(id_case)
     catchmentList = []
     ptapList=[]
+    base_url_api = 'http://dev.skaphe.com:8000/'
+    #base_url_api = 'http://localhost:8000/'
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36',
+    }
+    #------------------------#
+    # EJECUCION EXCHANGE RATE
+    #------------------------#
+    urlExchageRate = base_url_api + 'exchangeRate'
+    parameters = {
+        'study_case_id': id_case
+    }
+    data = makeGetRequest(urlExchageRate, parameters, 5, headers)
     for catch in catchments:
         catchmentList.append(catch[0])
     for ptap in ptaps:
@@ -143,8 +155,6 @@ def execPreproc():
         #------------------------#
         # TRADUCTOR DE COBERTURAS
         #------------------------#
-        base_url_api = 'http://dev.skaphe.com:8000/'
-        #base_url_api = 'http://localhost:8000/'
         url = base_url_api + 'cobTrans'
         first_nbs=nbsList[0]
         parameters = {
