@@ -107,7 +107,7 @@ def exportToShp(catchment, path):
         count = layer.GetFeatureCount()
 
         if(count == 0):
-            sql = "select * from waterproof_intake_polygon where delimitation_type = 'catchment' and intake_id" + \
+            sql = "select * from waterproof_intake_polygon where delimitation_type = 'CATCHMENT' and intake_id" + \
                 str(params)
             layer = conn.ExecuteSQL(sql)
 
