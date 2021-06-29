@@ -278,7 +278,7 @@ def execPreproc():
     url = base_url_api + 'roiExecution'
     parameters = {
         'user_id': id_usuario,
-        'study_case_id': id_case
+        'study_cases_id': id_case
     }
     try:
         data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
