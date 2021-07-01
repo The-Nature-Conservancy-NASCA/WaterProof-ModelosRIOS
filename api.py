@@ -78,7 +78,7 @@ def execPreproc():
     ptaps=exec_preproc.getStudyCasePtaps(id_case)
     catchmentList = []
     ptapList=[]
-    base_url_api = 'http://wfapp_py3/'
+    base_url_api = 'http://wfapp_py3:8000/'
     #base_url_api = 'http://localhost:8000/'
     headers = {
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36',
