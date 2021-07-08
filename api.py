@@ -246,6 +246,17 @@ def execPreproc():
         	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
         except:
         	logger.warning("error executing::  %s", url)     
+        #------------------#
+        # EJECUCION ACUEDUCT
+        #------------------#
+        # url = base_url_api + 'acueduct'
+        # parameters = {
+        #         'path': out_directory
+        # }
+        # try:
+        # 	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+        # except:
+        # 	logger.warning("error executing::  %s", url)    
     #---------------#
     # MODELOS PTAP
     #--------------#
@@ -274,6 +285,20 @@ def execPreproc():
         data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
     except:
         logger.warning("error executing::  %s", url)  
+    
+    #---------------------#
+    # EJECUCION INDICATORS
+    #---------------------#
+    url = base_url_api + 'indicators'
+    parameters = {
+        'user_id': id_usuario,
+        'study_cases_id': id_case
+    }
+    try:
+        data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+    except:
+        logger.warning("error executing::  %s", url)    
+
     #---------------#
     # EJECUCION ROI
     #---------------#
