@@ -167,7 +167,7 @@ def execPreproc():
             'nbs_id': first_nbs,
             'basin' : basin,
             'study_case_id' : id_case,
-            'pathLULC': process_path + 'in/04-RIOS/LULC_%s.tif'
+            'pathLULC': path_lulc
         }
         data = makeGetRequest(url, parameters, 5, headers)
 
