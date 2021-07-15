@@ -19,7 +19,7 @@ logger.setLevel(logging.DEBUG)
 
 @app.route('/welcome/', methods=['GET'])
 def welcome():
-    return "Welcome to localhost:5050"
+    return "Welcome PY2 Models - Beta v 0.9.1"
 
 
 @app.route("/preprocRIOS", methods=['GET'])
@@ -155,14 +155,19 @@ def execPreproc():
         #------------------------#
         # TRADUCTOR DE COBERTURAS
         #------------------------#
+        print ("TRADUCTOR DE COBERTURAS")
         url = base_url_api + 'cobTrans'
         first_nbs=nbsList[0]
+        region = getRegionFromId(basin)
+        region_name = region[4]
+        path_lulc = process_path + 'in/04-RIOS/LULC_%s.tif' % region_name
+        print("path_lulc = %s" % path_lulc) 
         parameters = {
             'pathCobs': process_path + 'out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios/continuous_activity_portfolios',
             'nbs_id': first_nbs,
             'basin' : basin,
             'study_case_id' : id_case,
-            'pathLULC': process_path + 'in/04-RIOS/LULC_SA_1.tif'
+            'pathLULC': process_path + 'in/04-RIOS/LULC_%s.tif'
         }
         data = makeGetRequest(url, parameters, 5, headers)
 
