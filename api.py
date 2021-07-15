@@ -157,8 +157,8 @@ def execPreproc():
         #------------------------#
         print ("TRADUCTOR DE COBERTURAS")
         url = base_url_api + 'cobTrans'
-        first_nbs=nbsList[0]
-        region = getRegionFromId(basin)
+        first_nbs=nbsList[0] 
+        region = exec_preproc.getRegionFromId(basin)
         region_name = region[4]
         path_lulc = process_path + 'in/04-RIOS/LULC_%s.tif' % region_name
         print("path_lulc = %s" % path_lulc) 
