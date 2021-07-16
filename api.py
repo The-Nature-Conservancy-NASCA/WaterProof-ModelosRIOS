@@ -28,36 +28,36 @@ def execPreproc():
     id_case = request.args.get('id_case')
     studyCases_objectives = exec_preproc.getStudyCaseObjectives(id_case)
     objectives={
-        'do_erosion':False,
-        'do_nutrient_p': False,
-        'do_nutrient_n':False,
-        'do_flood': False,
-        'do_gw_bf': False
+        'do_erosion':True,
+        'do_nutrient_p': True,
+        'do_nutrient_n':True,
+        'do_flood': True,
+        'do_gw_bf': True
     }
     
-    for obj in studyCases_objectives:
-        # Erosion control for drinking wwater quality RIOS
-        if (obj[0]==1):
-            objectives['do_erosion']=True
-        # Erosion control for reservoir maintenance RIOS
-        elif (obj[0]==2):
-            objectives['do_erosion']=True
-        # Nutrient retention (Phosporous) RIOS
-        elif (obj[0]==3):
-            objectives['do_nutrient_p']=True
-        # Nutrient retention (Nitrogen) RIOS
-        elif (obj[0]==4):
-            objectives['do_nutrient_n']=True 
-        # Flood mitigation RIOS
-        elif (obj[0]==5):
-            objectives['do_flood']=True
-        # Groundwater recharge enhancement RIOS        
-        elif (obj[0]==6):
-            objectives['do_gw_bf']=True
-        # Baseflow RIOS
-        else:
-            objectives['do_gw_bf']=True
-        print(obj)
+    # for obj in studyCases_objectives:
+    #     # Erosion control for drinking wwater quality RIOS
+    #     if (obj[0]==1):
+    #         objectives['do_erosion']=True
+    #     # Erosion control for reservoir maintenance RIOS
+    #     elif (obj[0]==2):
+    #         objectives['do_erosion']=True
+    #     # Nutrient retention (Phosporous) RIOS
+    #     elif (obj[0]==3):
+    #         objectives['do_nutrient_p']=True
+    #     # Nutrient retention (Nitrogen) RIOS
+    #     elif (obj[0]==4):
+    #         objectives['do_nutrient_n']=True 
+    #     # Flood mitigation RIOS
+    #     elif (obj[0]==5):
+    #         objectives['do_flood']=True
+    #     # Groundwater recharge enhancement RIOS        
+    #     elif (obj[0]==6):
+    #         objectives['do_gw_bf']=True
+    #     # Baseflow RIOS
+    #     else:
+    #         objectives['do_gw_bf']=True
+    #     print(obj)
 
     #do_erosion,do_np, do_nn, do_flood,do_gw_bf,basin,catchment,id_usuario
     # print(request.args.get('do_np'))
@@ -66,6 +66,7 @@ def execPreproc():
     do_nn = objectives['do_nutrient_n']
     do_flood = objectives['do_flood']
     do_gw_bf = objectives['do_gw_bf']
+   
     #basin = request.args.get('basin')
     #catchment = str(request.args.get('catchment'))
     logging.debug('debug message')
