@@ -80,7 +80,7 @@ def execPreproc():
     catchmentList = []
     ptapList=[]
     base_url_api = 'http://wfapp_py3:8000/'
-    #base_url_api = 'http://localhost:8000/'
+    #base_url_api = 'http://dev.skaphe.com:8000/'
     headers = {
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36',
     }
@@ -110,23 +110,26 @@ def execPreproc():
         print("::CATCHMENT OUT:::")
         print(catchmentOut)
         listObjs = []
+        #Asignar lista de objetivos del CE
+        for objective in studyCases_objectives:
+            listObjs.append(objective[0])
 
-        if do_erosion:
-            listObjs.append(2)
-            listObjs.append(3)
+        # if do_erosion:
+        #     listObjs.append(2)
+        #     listObjs.append(3)
 
-        if do_np:
-            listObjs.append(5)
+        # if do_np:
+        #     listObjs.append(5)
 
-        if do_nn:
-            listObjs.append(4)
+        # if do_nn:
+        #     listObjs.append(4)
 
-        if do_flood:
-            listObjs.append(6)
+        # if do_flood:
+        #     listObjs.append(6)
 
-        if do_gw_bf:
-            listObjs.append(7)
-            listObjs.append(8)
+        # if do_gw_bf:
+        #     listObjs.append(7)
+        #     listObjs.append(8)
 
         process_path = "/home/skaphe/Documentos/tnc/modelos/salidas/%s/" % (
             out_directory)
@@ -255,14 +258,15 @@ def execPreproc():
         #------------------#
         # EJECUCION ACUEDUCT
         #------------------#
-        # url = base_url_api + 'acueduct'
-        # parameters = {
-        #         'path': out_directory
-        # }
-        # try:
-        # 	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
-        # except:
-        # 	logger.warning("error executing::  %s", url)    
+        url = base_url_api + 'acueduct'
+        parameters = {
+                'path': out_directory,
+                'id_intake': catchment
+        }
+        try:
+        	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+        except:
+        	logger.warning("error executing::  %s", url)    
     #---------------#
     # MODELOS PTAP
     #--------------#
@@ -298,7 +302,7 @@ def execPreproc():
     url = base_url_api + 'indicators'
     parameters = {
         'user_id': id_usuario,
-        'study_cases_id': id_case
+        'study_case_id': id_case
     }
     try:
         data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
