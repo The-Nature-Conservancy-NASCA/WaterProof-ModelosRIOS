@@ -260,7 +260,7 @@ def execPreproc():
         #------------------#
         url = base_url_api + 'acueduct'
         parameters = {
-                'path': out_directory,
+                'path': process_path,
                 'id_intake': catchment
         }
         try:
