@@ -258,7 +258,7 @@ def execPreproc():
         #------------------#
         # EJECUCION ACUEDUCT
         #------------------#
-        url = base_url_api + 'acueduct'
+        url = base_url_api + 'aqueduct'
         parameters = {
                 'path': process_path,
                 'id_intake': catchment
