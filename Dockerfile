@@ -9,18 +9,6 @@ ADD dev_requirements.txt /app/dev_requirements.txt
 RUN apt update && apt install -y libpq-dev gdal-bin libgdal-dev
 
 
-
-#RUN apt-get update && apt-get install -y build-essential
-#RUN apt-get install -y libpq-dev python3-dev
-#RUN apt-get install -y libspatialindex-dev python-rtree
-#RUN apt-get install -y libopenjp2-7-dev
-
-#RUN conda env create -f /tmp/environment.yml
-
-#RUN echo "source activate $(head -1 /tmp/environment.yml | cut -d' ' -f2)" > ~/.bashrc
-#ENV PATH /opt/conda/envs/$(head -1 /tmp/environment.yml | cut -d' ' -f2)/bin:$PATH
-#SHELL ["conda", "run", "-n", "RIOS", "/bin/bash", "-c"]
-
 WORKDIR /app
 
 RUN pip install -r requirements_before.txt
