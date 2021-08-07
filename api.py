@@ -19,7 +19,8 @@ logger.setLevel(logging.DEBUG)
 
 @app.route('/welcome/', methods=['GET'])
 def welcome():
-    return "Welcome PY2 Models - Beta v 0.9.1"
+    result = {'message': 'Welcome to RIOS API', 'status': 'success'}
+    return result
 
 
 @app.route("/preprocRIOS", methods=['GET'])
@@ -27,6 +28,7 @@ def execPreproc():
     id_usuario = request.args.get('id_usuario')
     id_case = request.args.get('id_case')
     studyCases_objectives = exec_preproc.getStudyCaseObjectives(id_case)
+    result = {'message': 'Preprocessing', 'status': 'success'}
     objectives={
         'do_erosion':True,
         'do_nutrient_p': True,
@@ -322,7 +324,7 @@ def execPreproc():
     except:
         logger.warning("error executing::  %s", url)    
 
-    return "Exito"
+    return result
 
 def str2bool(v):
     return v.lower() in ("true", "True")
