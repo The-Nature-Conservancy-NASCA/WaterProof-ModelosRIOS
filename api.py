@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 import exec_preproc
 from execRIOS import getParameters,processParameters,execModel
 from flask import request
@@ -20,7 +20,7 @@ logger.setLevel(logging.DEBUG)
 @app.route('/welcome/', methods=['GET'])
 def welcome():
     result = {'message': 'Welcome to RIOS API', 'status': 'success'}
-    return result
+    return jsonify(result)
 
 
 @app.route("/preprocRIOS", methods=['GET'])
@@ -324,7 +324,7 @@ def execPreproc():
     except:
         logger.warning("error executing::  %s", url)    
 
-    return result
+    return jsonify(result)
 
 def str2bool(v):
     return v.lower() in ("true", "True")
