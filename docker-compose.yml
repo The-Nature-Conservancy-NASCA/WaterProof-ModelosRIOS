@@ -17,10 +17,10 @@ services:
       - PG_PORT=${PG_PORT}
       - PATH_FILES=${PATH_FILES}      
     volumes:
-      - /data/global_datasets/:/home/skaphe/Documentos/tnc/modelos/entradas/
-      - /data/outputs/:/home/skaphe/Documentos/tnc/modelos/salidas/
-      # - /home/skaphe/Documentos/tnc/modelos/entradas/:/home/skaphe/Documentos/tnc/modelos/entradas/
-      # - /home/skaphe/Documentos/tnc/modelos/salidas/:/home/skaphe/Documentos/tnc/modelos/salidas/
+      #- /data/global_datasets/:/home/skaphe/Documentos/tnc/modelos/entradas/
+      #- /data/outputs/:/home/skaphe/Documentos/tnc/modelos/salidas/
+      - /home/skaphe/Documentos/tnc/modelos/entradas/:/home/skaphe/Documentos/tnc/modelos/entradas/
+      - /home/skaphe/Documentos/tnc/modelos/salidas/:/home/skaphe/Documentos/tnc/modelos/salidas/
       # - F:/PROYECTOS/TNC/WFAPP/modelos/entradas/:/home/skaphe/Documentos/tnc/modelos/entradas/
       # - F:/PROYECTOS/TNC/WFAPP/modelos/salidas/:/home/skaphe/Documentos/tnc/modelos/salidas/      
       # - .:/app
