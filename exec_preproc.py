@@ -654,7 +654,7 @@ def parse_to_get_ipa_report(path_file,catchment,id_case,id_usuario):
 def updateStudyCaseTunAnalisys(id):
     conn = connect('postgresql_alfa')
     cursor = conn.cursor()    
-    cursor.execute('UPDATE waterproof_study_cases_studycases SET is_run_analisys = true WHERE id = %s',id)
+    cursor.execute('UPDATE waterproof_study_cases_studycases SET is_run_analysis = true WHERE id = %s',id)
     conn.commit()
     cursor.close()
     conn.close()
