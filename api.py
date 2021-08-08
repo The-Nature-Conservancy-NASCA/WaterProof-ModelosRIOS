@@ -335,6 +335,11 @@ def makeGetRequest(url, parameters, timeout, headers):
     data = r.json()
     return data
 
+@app.route("/updateStudyCase", methods=['GET'])
+def updateStudyCase():
+    id_case = request.args.get('id_case')
+    exec_preproc.updateStudyCaseTunAnalisys(id_case)
+
 if __name__ == '__main__':
     logger.debug("start debugging port :: 5678")
     #debugpy.listen(5678)

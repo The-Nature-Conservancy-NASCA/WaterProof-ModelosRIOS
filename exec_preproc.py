@@ -568,6 +568,7 @@ def analysisPeriodFromStudyCase(id):
 """ Function to get All Years budget from IPA Report(Rios Portfolio)"""
 """ using AdvancedHTMLParser return all the elements with className = budget_year """
 def parse_to_get_ipa_report(path_file,catchment,id_case,id_usuario):
+
     path_file=path_file+"/1_investment_portfolio_adviser_workspace/html_report/ipa_report.html"
     class_name = "budget_year"
     f = open(path_file, 'r')
@@ -648,3 +649,12 @@ def parse_to_get_ipa_report(path_file,catchment,id_case,id_usuario):
     cursor.close()
     conn.close()
     return "Ipa Report Ready"
+
+
+def updateStudyCaseTunAnalisys(id):
+    conn = connect('postgresql_alfa')
+    cursor = conn.cursor()    
+    cursor.execute('UPDATE waterproof_study_cases_studycases SET is_run_analisys = true WHERE id = %s',id)
+    conn.commit()
+    cursor.close()
+    conn.close()
