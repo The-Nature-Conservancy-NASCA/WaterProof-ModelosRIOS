@@ -339,7 +339,7 @@ def makeGetRequest(url, parameters, timeout, headers):
 @app.route("/updateStudyCase", methods=['GET'])
 def updateStudyCase():
     id_case = request.args.get('id_case')
-    exec_preproc.updateStudyCaseTunAnalisys(id_case)
+    exec_preproc.updateStudyCaseRunAnalisys(id_case)
     result = {'message': 'Preprocessing', 'status': 'success'}
     return jsonify(result)
 
