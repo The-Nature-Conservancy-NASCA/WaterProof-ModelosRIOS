@@ -661,3 +661,14 @@ def updateStudyCaseRunAnalisys(id):
     conn.commit()
     cursor.close()
     conn.close()
+
+def queryStudyCaseRunAnalisys(id):
+    conn = connect('postgresql_alfa')
+    cursor = conn.cursor()
+    print ("StudyCase : %s"  % id)
+    sql = 'SELECT is_run_analysis from waterproof_study_cases_studycases WHERE id = %s' % id
+    print (sql)
+    result = cursor.fetchone(sql)    
+    cursor.close()
+    conn.close()
+    return result

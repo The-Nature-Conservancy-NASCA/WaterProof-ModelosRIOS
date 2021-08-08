@@ -340,7 +340,14 @@ def makeGetRequest(url, parameters, timeout, headers):
 def updateStudyCase():
     id_case = request.args.get('id_case')
     exec_preproc.updateStudyCaseRunAnalisys(id_case)
-    result = {'message': 'Preprocessing', 'status': 'success'}
+    result = {'message': 'updateStudyCase', 'status': 'success'}
+    return jsonify(result)
+
+@app.route("/queryStudyCaseAnalisysResult", methods=['GET'])
+def queryStudyCaseAnalisysResult():
+    id_case = request.args.get('id_case')
+    result_db = exec_preproc.queryStudyCaseRunAnalisys(id_case)
+    result = {'message': 'queryStudyCaseAnalisysResult', 'status': result_db}
     return jsonify(result)
 
 if __name__ == '__main__':
