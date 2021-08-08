@@ -324,6 +324,7 @@ def execPreproc():
     except:
         logger.warning("error executing::  %s", url)    
 
+    exec_preproc.updateStudyCaseRunAnalisys(id_case)
     return jsonify(result)
 
 def str2bool(v):
@@ -339,6 +340,8 @@ def makeGetRequest(url, parameters, timeout, headers):
 def updateStudyCase():
     id_case = request.args.get('id_case')
     exec_preproc.updateStudyCaseTunAnalisys(id_case)
+    result = {'message': 'Preprocessing', 'status': 'success'}
+    return jsonify(result)
 
 if __name__ == '__main__':
     logger.debug("start debugging port :: 5678")
