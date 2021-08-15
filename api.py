@@ -17,13 +17,13 @@ logger.setLevel(logging.DEBUG)
 # logger.addHandler(handler) # adds handler to the werkzeug WSGI logger
 
 
-@app.route('/welcome/', methods=['GET'])
+@app.route('/wf-rios/welcome/', methods=['GET'])
 def welcome():
     result = {'message': 'Welcome to RIOS API', 'status': 'success'}
     return jsonify(result)
 
 
-@app.route("/preprocRIOS", methods=['GET'])
+@app.route("/wf-rios/preprocRIOS", methods=['GET'])
 def execPreproc():
     id_usuario = request.args.get('id_usuario')
     id_case = request.args.get('id_case')
@@ -336,14 +336,14 @@ def makeGetRequest(url, parameters, timeout, headers):
     data = r.json()
     return data
 
-@app.route("/updateStudyCase", methods=['GET'])
+@app.route("/wf-rios/updateStudyCase", methods=['GET'])
 def updateStudyCase():
     id_case = request.args.get('id_case')
     exec_preproc.updateStudyCaseRunAnalisys(id_case)
     result = {'message': 'updateStudyCase', 'status': 'success'}
     return jsonify(result)
 
-@app.route("/queryStudyCaseAnalisysResult", methods=['GET'])
+@app.route("/wf-rios/queryStudyCaseAnalisysResult", methods=['GET'])
 def queryStudyCaseAnalisysResult():
     id_case = request.args.get('id_case')
     result_db = exec_preproc.queryStudyCaseRunAnalisys(id_case)
