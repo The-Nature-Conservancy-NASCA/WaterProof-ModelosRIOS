@@ -22,6 +22,13 @@ def welcome():
     result = {'message': 'Welcome to RIOS API', 'status': 'success'}
     return jsonify(result)
 
+@app.route('/wf-rios/test-invest/', methods=['GET'])
+def test_invest():
+    base_url_api = 'http://wfapp_py3:8000/wf-models/'
+    r = requests.get(url=base_url_api)
+    data = r.json()
+    return jsonify(data)
+
 
 @app.route("/wf-rios/preprocRIOS", methods=['GET'])
 def execPreproc():
@@ -81,7 +88,7 @@ def execPreproc():
     ptaps=exec_preproc.getStudyCasePtaps(id_case)
     catchmentList = []
     ptapList=[]
-    base_url_api = 'http://wfapp_py3:8000/'
+    base_url_api = 'http://wfapp_py3:8000/wf-models/'
     #base_url_api = 'http://dev.skaphe.com:8000/'
     headers = {
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36',
@@ -169,7 +176,7 @@ def execPreproc():
         path_lulc = process_path + 'in/04-RIOS/LULC_%s.tif' % region_name
         print("path_lulc = %s" % path_lulc) 
         parameters = {
-            'pathCobs': process_path + 'out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios/continuous_activity_portfolios',
+            'pathCobs': process_path + 'out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios',
             'nbs_id': first_nbs,
             'basin' : basin,
             'study_case_id' : id_case,
