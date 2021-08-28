@@ -580,14 +580,14 @@ def parse_to_get_ipa_report(path_file,catchment,id_case,id_usuario):
     cursor = conn.cursor()
     today = datetime.date.today()
     date=str(today.year)+'-'+str(today.month)+'-'+str(today.day)
-    allYear_quant=len(budget_years[2].children[1].children)-1
+    allYear_quant=len(budget_years[1].children[1].children)-1
     allYear_counter=1
     year=9999
     #-------------------------
     # All Years budget totals
     #------------------------
     while allYear_counter<=allYear_quant:
-        allYear_values=budget_years[2].children[1].children[allYear_counter].children
+        allYear_values=budget_years[1].children[1].children[allYear_counter].children
         # FLoating budget
         if (allYear_counter==1):
             sbn=str(allYear_values[0].innerText)
