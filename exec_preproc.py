@@ -766,7 +766,7 @@ def message_mail(language, start):
                 <html>
                 <body>
                     <p>Dear User %s,</p>
-                    <p><br />You started the execution of the process identified with Id: %s for the Study Case: %s.</p>
+                    <p><br />You started the execution of the process identified with Id: %s for the Case Study: %s.</p>
                     <p>Once the process is finished, we will be sending you an email informing you to review the results.</p>
                     <p>Execution Start Date:% s</p>
                     <p>Regards,</p>
@@ -780,7 +780,7 @@ def message_mail(language, start):
                 <body>
                     <p>Dear User %s,</p>
                     
-                    <p>You execution process identified with Id: %s for the Study Case  %s has finished.</p>
+                    <p>You execution process identified with Id: %s for the Case Study: %s has finished.</p>
                     <p>Finished Date:% s</p>
                     <p>Regards,</p>
                     <p>TNC team</p>
