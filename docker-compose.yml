@@ -15,12 +15,16 @@ services:
       - PG_USER=${PG_USER}
       - PG_PASSWORD=${PG_PASSWORD}
       - PG_PORT=${PG_PORT}
-      - PATH_FILES=${PATH_FILES}      
+      - PATH_FILES=${PATH_FILES} 
+      - EMAIL_SERVER=${EMAIL_SERVER} 
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_SENDER=${EMAIL_SENDER}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}      
     volumes:
-      #- /data/global_datasets/:/home/skaphe/Documentos/tnc/modelos/entradas/
-      #- /data/outputs/:/home/skaphe/Documentos/tnc/modelos/salidas/
-      - /home/skaphe/Documentos/tnc/modelos/entradas/:/home/skaphe/Documentos/tnc/modelos/entradas/
-      - /home/skaphe/Documentos/tnc/modelos/salidas/:/home/skaphe/Documentos/tnc/modelos/salidas/
+      - /data/global_datasets/:/home/skaphe/Documentos/tnc/modelos/entradas/
+      - /data/outputs/:/home/skaphe/Documentos/tnc/modelos/salidas/
+      # - /home/skaphe/Documentos/tnc/modelos/entradas/:/home/skaphe/Documentos/tnc/modelos/entradas/
+      # - /home/skaphe/Documentos/tnc/modelos/salidas/:/home/skaphe/Documentos/tnc/modelos/salidas/
       # - F:/PROYECTOS/TNC/WFAPP/modelos/entradas/:/home/skaphe/Documentos/tnc/modelos/entradas/
       # - F:/PROYECTOS/TNC/WFAPP/modelos/salidas/:/home/skaphe/Documentos/tnc/modelos/salidas/      
       # - .:/app

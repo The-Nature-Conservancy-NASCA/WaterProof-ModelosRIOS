@@ -24,9 +24,15 @@ def welcome():
 
 @app.route('/wf-rios/test-invest/', methods=['GET'])
 def test_invest():
+    user_id = request.args.get('user_id')
+    study_case_id = request.args.get('study_case_id')
+    status = request.args.get('status')
     base_url_api = 'http://wfapp_py3:8000/wf-models/'
     r = requests.get(url=base_url_api)
-    data = r.json()
+    data = r.json()    
+    
+    data['user'] = user_id
+    exec_preproc.sendEmail(user_id, study_case_id, status == 'start')
     return jsonify(data)
 
 
@@ -36,6 +42,9 @@ def execPreproc():
     id_case = request.args.get('id_case')
     studyCases_objectives = exec_preproc.getStudyCaseObjectives(id_case)
     result = {'message': 'Preprocessing', 'status': 'success'}
+
+    exec_preproc.sendEmail(id_usuario, id_case, True)
+
     objectives={
         'do_erosion':True,
         'do_nutrient_p': True,
@@ -44,31 +53,7 @@ def execPreproc():
         'do_gw_bf': True
     }
     
-    # for obj in studyCases_objectives:
-    #     # Erosion control for drinking wwater quality RIOS
-    #     if (obj[0]==1):
-    #         objectives['do_erosion']=True
-    #     # Erosion control for reservoir maintenance RIOS
-    #     elif (obj[0]==2):
-    #         objectives['do_erosion']=True
-    #     # Nutrient retention (Phosporous) RIOS
-    #     elif (obj[0]==3):
-    #         objectives['do_nutrient_p']=True
-    #     # Nutrient retention (Nitrogen) RIOS
-    #     elif (obj[0]==4):
-    #         objectives['do_nutrient_n']=True 
-    #     # Flood mitigation RIOS
-    #     elif (obj[0]==5):
-    #         objectives['do_flood']=True
-    #     # Groundwater recharge enhancement RIOS        
-    #     elif (obj[0]==6):
-    #         objectives['do_gw_bf']=True
-    #     # Baseflow RIOS
-    #     else:
-    #         objectives['do_gw_bf']=True
-    #     print(obj)
-
-    #do_erosion,do_np, do_nn, do_flood,do_gw_bf,basin,catchment,id_usuario
+      #do_erosion,do_np, do_nn, do_flood,do_gw_bf,basin,catchment,id_usuario
     # print(request.args.get('do_np'))
     do_erosion =  objectives['do_erosion']
     do_np = objectives['do_nutrient_p']
@@ -122,23 +107,6 @@ def execPreproc():
         #Asignar lista de objetivos del CE
         for objective in studyCases_objectives:
             listObjs.append(objective[0])
-
-        # if do_erosion:
-        #     listObjs.append(2)
-        #     listObjs.append(3)
-
-        # if do_np:
-        #     listObjs.append(5)
-
-        # if do_nn:
-        #     listObjs.append(4)
-
-        # if do_flood:
-        #     listObjs.append(6)
-
-        # if do_gw_bf:
-        #     listObjs.append(7)
-        #     listObjs.append(8)
 
         process_path = "/home/skaphe/Documentos/tnc/modelos/salidas/%s/" % (
             out_directory)
@@ -332,6 +300,8 @@ def execPreproc():
         logger.warning("error executing::  %s", url)    
 
     exec_preproc.updateStudyCaseRunAnalisys(id_case)
+    exec_preproc.sendEmail(id_usuario, id_case, False)
+
     return jsonify(result)
 
 def str2bool(v):
