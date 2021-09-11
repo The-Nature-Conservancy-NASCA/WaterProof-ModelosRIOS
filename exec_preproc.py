@@ -17,6 +17,9 @@ import osr
 import datetime
 import json
 import AdvancedHTMLParser 
+import smtplib, ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from AdvancedHTMLParser import AdvancedTag
 from rasterio.mask import mask
 from zonalStatistics import calculateRainfallDayMonth, calculateStatistic
@@ -673,3 +676,112 @@ def queryStudyCaseRunAnalisys(id):
     cursor.close()
     conn.close()
     return result
+
+
+def sendEmail(id_user, study_case_id, start):
+
+    sql = 'select email, language, first_name  || ' ' || last_name as name from people_profile pp where id = %s' % id_user
+    conn = connect('postgresql_alfa')
+    cursor = conn.cursor()
+    cursor.execute(sql)    
+    result = cursor.fetchone()
+    cursor.close()
+    
+    email = 'edwin.piragauta@gmail.com'
+    language = 'en'
+    user_full_name = email
+    try:
+        email = result[0]
+        language = result[1]
+        user_full_name = result[2]
+    except:
+        print "error reading info user"        
+
+    sql = "select name from waterproof_study_cases_studycases wscs where id = %s " % study_case_id
+    cursor = conn.cursor()
+    cursor.execute(sql)
+    result = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    study_case_name = 'No Name Study Case'
+    try:
+        study_case_name = result[0]
+    except:
+        print "error reading info user"
+
+    port = os.getenv('EMAIL_PORT', '587')
+    smtp_server = os.getenv('EMAIL_SERVER', 'smtp.gmail.com')
+    sender_email = os.getenv('EMAIL_SENDER', 'srst@skaphe.com')    
+    password = os.getenv('EMAIL_PASSWORD', 'Skaphe2020*')
+    receiver_email = email
+
+    print ("Sending email to %s" % receiver_email)
+    print ("Sender: %s" % sender_email)
+    print ("Password: %s" % password)   
+    print ("Server: %s" % smtp_server)
+    
+    context = ssl.create_default_context()
+        
+    to = [email]
+    subject = 'Waterproof Super Important Message'
+    body = 'Hey, what\'s up?\n\n- You'
+
+    email_text = """\
+    From: %s
+    To: %s 
+    Subject: %s
+
+    %s
+    """ % (sender_email, ", ".join(to), subject, body)
+    
+    message = MIMEMultipart("alternative")
+    message["Subject"] = "Waterproof Execution Models (Start)"
+    message["From"] = sender_email + " TNC - water-proof.org"
+    message["To"] = receiver_email
+
+    current_time = datetime.datetime.now()
+   
+    html = message_mail('en', start)
+    html = html % (user_full_name, study_case_id, study_case_name, current_time)
+    part = MIMEText(html, "html")
+    message.attach(part)
+
+    try:        
+        server =  smtplib.SMTP_SSL(smtp_server, port)
+        server.ehlo()
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, message.as_string())
+        server.close()
+        print 'Email sent!'
+    except (e):
+        print 'Something went wrong...: %s' % e
+
+def message_mail(language, start):
+
+    if (language == 'en'):
+        if (start == True):
+            return """\
+                <html>
+                <body>
+                    <p>Dear User %s,</p>
+                    <p><br />You started the execution of the process identified with Id: %s for the Study Case: %s.</p>
+                    <p>Once the process is finished, we will be sending you an email informing you to review the results.</p>
+                    <p>Execution Start Date:% s</p>
+                    <p>Cordially,</p>
+                    <p>TNC team</p>
+                </body>
+                </html>
+                """
+        else:
+            return """\
+                <html>
+                <body>
+                    <p>Dear User %s,</p>
+                    
+                    <p>You execution process identified with Id: %s for the Study Case  %s has finished.</p>
+                    <p>Finished Date:% s</p>
+                    <p>Cordially,</p>
+                    <p>TNC team</p>
+                </body>
+                </html>
+                """
