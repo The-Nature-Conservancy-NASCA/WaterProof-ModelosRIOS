@@ -680,7 +680,7 @@ def queryStudyCaseRunAnalisys(id):
 
 def sendEmail(id_user, study_case_id, start):
 
-    sql = 'select email, language, first_name  || ' ' || last_name as name from people_profile pp where id = %s' % id_user
+    sql = "select email, language, first_name  || ' ' || last_name as name from people_profile pp where id = %s" % id_user
     conn = connect('postgresql_alfa')
     cursor = conn.cursor()
     cursor.execute(sql)    
@@ -733,9 +733,11 @@ def sendEmail(id_user, study_case_id, start):
 
     %s
     """ % (sender_email, ", ".join(to), subject, body)
-    
+    status = "Start"
+    if (start == False):
+        status = "Finish"
     message = MIMEMultipart("alternative")
-    message["Subject"] = "Waterproof Execution Models (Start)"
+    message["Subject"] = "Waterproof Execution Models (%s)" % status
     message["From"] = sender_email + " TNC - water-proof.org"
     message["To"] = receiver_email
 
@@ -767,7 +769,7 @@ def message_mail(language, start):
                     <p><br />You started the execution of the process identified with Id: %s for the Study Case: %s.</p>
                     <p>Once the process is finished, we will be sending you an email informing you to review the results.</p>
                     <p>Execution Start Date:% s</p>
-                    <p>Cordially,</p>
+                    <p>Regards,</p>
                     <p>TNC team</p>
                 </body>
                 </html>
@@ -780,7 +782,7 @@ def message_mail(language, start):
                     
                     <p>You execution process identified with Id: %s for the Study Case  %s has finished.</p>
                     <p>Finished Date:% s</p>
-                    <p>Cordially,</p>
+                    <p>Regards,</p>
                     <p>TNC team</p>
                 </body>
                 </html>

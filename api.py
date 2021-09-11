@@ -24,15 +24,15 @@ def welcome():
 
 @app.route('/wf-rios/test-invest/', methods=['GET'])
 def test_invest():
-    user_id = request.args.get('id_user')
+    user_id = request.args.get('user_id')
     study_case_id = request.args.get('study_case_id')
+    status = request.args.get('status')
     base_url_api = 'http://wfapp_py3:8000/wf-models/'
     r = requests.get(url=base_url_api)
     data = r.json()    
     
-    data['user'] = id_user
-    exec_preproc.sendEmail(user_id, study_case_id, true)
-    exec_preproc.sendEmail(user_id, study_case_id, false)
+    data['user'] = user_id
+    exec_preproc.sendEmail(user_id, study_case_id, status == 'start')
     return jsonify(data)
 
 
@@ -42,6 +42,9 @@ def execPreproc():
     id_case = request.args.get('id_case')
     studyCases_objectives = exec_preproc.getStudyCaseObjectives(id_case)
     result = {'message': 'Preprocessing', 'status': 'success'}
+
+    exec_preproc.sendEmail(id_usuario, id_case, True)
+
     objectives={
         'do_erosion':True,
         'do_nutrient_p': True,
@@ -297,6 +300,8 @@ def execPreproc():
         logger.warning("error executing::  %s", url)    
 
     exec_preproc.updateStudyCaseRunAnalisys(id_case)
+    exec_preproc.sendEmail(id_usuario, id_case, False)
+
     return jsonify(result)
 
 def str2bool(v):
