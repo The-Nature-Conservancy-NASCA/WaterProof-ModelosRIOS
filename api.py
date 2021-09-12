@@ -347,7 +347,7 @@ def generate_ms_classes(activity_portfolios_path):
     ms_classes = ""
     for k, v in data_activity.items():
         ms_classes += ms_class_tpl % (v['index'], k, classes_colors[v['index']])
-    ms_classes_file = text_file(os.path.join(activity_portfolios_path, 'activity_raster_id.map'), 'w')
+    ms_classes_file = open(os.path.join(activity_portfolios_path, 'activity_raster_id.map'), 'w')
     ms_classes_file.write(ms_classes)
     ms_classes_file.close()
 
