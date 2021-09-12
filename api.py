@@ -329,7 +329,7 @@ def generate_ms_classes(activity_portfolios_path):
     # GENERATE MAPSERVER CLASSES FOR ACTIVITY PORTFOLIO
     #------------------------#
     print ("GENERATE MAPSERVER CLASSES FOR ACTIVITY PORTFOLIO")
-    classes_colors = c ["19 141 117","25 111 61","34 153 84","175 96 26","243 156 18","241 196 15","247 220 111","125 102 8","98 101 103","144 148 151","202 207 210","40 55 71","93 109 126","169 204 227"]
+    classes_colors = ["19 141 117","25 111 61","34 153 84","175 96 26","243 156 18","241 196 15","247 220 111","125 102 8","98 101 103","144 148 151","202 207 210","40 55 71","93 109 126","169 204 227"]
     ms_class_tpl = """
             CLASS
                 EXPRESSION "%s"
@@ -346,7 +346,7 @@ def generate_ms_classes(activity_portfolios_path):
     json_file.close()
     ms_classes = ""
     for k, v in data_activity.items():
-        ms_classes += ms_class_tpl % (v['index'], k, c[v['index']])
+        ms_classes += ms_class_tpl % (v['index'], k, classes_colors[v['index']])
     ms_classes_file = text_file(os.path.join(activity_portfolios_path, 'activity_raster_id.map'), 'w')
     ms_classes_file.write(ms_classes)
     ms_classes_file.close()
