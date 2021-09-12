@@ -46,6 +46,8 @@ def test_generate_ms_classes():
     activity_portfolios_path = process_path + 'out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios'
     print (activity_portfolios_path)
     generate_ms_classes(activity_portfolios_path)
+    result = {'message': 'Generate map file', 'status': 'success'}
+    return jsonify(result)
 
 
 @app.route("/wf-rios/preprocRIOS", methods=['GET'])
