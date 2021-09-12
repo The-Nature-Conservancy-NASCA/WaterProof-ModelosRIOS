@@ -94,44 +94,84 @@ def exportToShpActivities(nbsList, path, user):
     feat = layer.GetNextFeature()
     n=0
     outputList=[]
-    while feat is not None:
-        output = os.path.join(path, "activity_"+feat.slug+"_shp")
-        print(output)
-        source = osr.SpatialReference()        
-        source.ImportFromEPSG(4326)
-        target = osr.SpatialReference()
-        epsg_3857 = 3857
-        epsg_54004 = 54004
-        target.ImportFromEPSG(epsg_54004)
-        transform = osr.CoordinateTransformation(source, target)
-        # Schema definition of SHP file
-        out_driver = ogr.GetDriverByName('ESRI Shapefile')
-        if os.path.exists(output):
-            out_driver.DeleteDataSource(output)
+    if feat is None:
+        sqlParam2=str(nbs[0])
+        sql2 = ("select shp.id,nbs.slug,shp.action,shp.area from waterproof_nbs_ca_waterproofnbsca nbs join waterproof_pr_default_nbs shp on shp.id=6 and nbs.id="+sqlParam2+";")
+        print(sql2)
+        layer2 = conn.ExecuteSQL(sql2)
+        feat2 = layer2.GetNextFeature()
+        while feat2 is not None:
+            output = os.path.join(path, "activity_"+feat2.slug+"_shp")
+            print(output)
+            source = osr.SpatialReference()        
+            source.ImportFromEPSG(4326)
+            target = osr.SpatialReference()
+            epsg_3857 = 3857
+            epsg_54004 = 54004
+            target.ImportFromEPSG(epsg_54004)
+            transform = osr.CoordinateTransformation(source, target)
+            # Schema definition of SHP file
+            out_driver = ogr.GetDriverByName('ESRI Shapefile')
+            if os.path.exists(output):
+                out_driver.DeleteDataSource(output)
 
-        out_ds = out_driver.CreateDataSource(output)
+            out_ds = out_driver.CreateDataSource(output)
 
-        out_layer = out_ds.CreateLayer("activities", target, ogr.wkbMultiPolygon)
-        fd_activity = ogr.FieldDefn('activity_n', ogr.OFTString)
-        fd_action = ogr.FieldDefn('action', ogr.OFTString)
-        out_layer.CreateField(fd_activity)
-        out_layer.CreateField(fd_action)
-        # print(feat)
-        featDef = ogr.Feature(out_layer.GetLayerDefn())
-        geom = feat.GetGeometryRef()
-        geom.Transform(transform)
-        featDef.SetGeometry(geom)
-        featDef.SetField('activity_n', feat.slug)
-        featDef.SetField('action', feat.action)
-        out_layer.CreateFeature(featDef)
-        feat.Destroy()
-        feat = layer.GetNextFeature()
-        outputList.append(output)
-        n=n+1
+            out_layer = out_ds.CreateLayer("activities", target, ogr.wkbMultiPolygon)
+            fd_activity = ogr.FieldDefn('activity_n', ogr.OFTString)
+            fd_action = ogr.FieldDefn('action', ogr.OFTString)
+            out_layer.CreateField(fd_activity)
+            out_layer.CreateField(fd_action)
+            # print(feat)
+            featDef = ogr.Feature(out_layer.GetLayerDefn())
+            geom = feat2.GetGeometryRef()
+            geom.Transform(transform)
+            featDef.SetGeometry(geom)
+            featDef.SetField('activity_n', feat2.slug)
+            featDef.SetField('action', feat2.action)
+            out_layer.CreateFeature(featDef)
+            feat2.Destroy()
+            feat2 = layer.GetNextFeature()
+            outputList.append(output)
+            n=n+1
+    else: 
+        while feat is not None:
+            output = os.path.join(path, "activity_"+feat.slug+"_shp")
+            print(output)
+            source = osr.SpatialReference()        
+            source.ImportFromEPSG(4326)
+            target = osr.SpatialReference()
+            epsg_3857 = 3857
+            epsg_54004 = 54004
+            target.ImportFromEPSG(epsg_54004)
+            transform = osr.CoordinateTransformation(source, target)
+            # Schema definition of SHP file
+            out_driver = ogr.GetDriverByName('ESRI Shapefile')
+            if os.path.exists(output):
+                out_driver.DeleteDataSource(output)
+
+            out_ds = out_driver.CreateDataSource(output)
+
+            out_layer = out_ds.CreateLayer("activities", target, ogr.wkbMultiPolygon)
+            fd_activity = ogr.FieldDefn('activity_n', ogr.OFTString)
+            fd_action = ogr.FieldDefn('action', ogr.OFTString)
+            out_layer.CreateField(fd_activity)
+            out_layer.CreateField(fd_action)
+            # print(feat)
+            featDef = ogr.Feature(out_layer.GetLayerDefn())
+            geom = feat.GetGeometryRef()
+            geom.Transform(transform)
+            featDef.SetGeometry(geom)
+            featDef.SetField('activity_n', feat.slug)
+            featDef.SetField('action', feat.action)
+            out_layer.CreateFeature(featDef)
+            feat.Destroy()
+            feat = layer.GetNextFeature()
+            outputList.append(output)
+            n=n+1
 
     conn.Destroy()
     out_ds.Destroy()
-
     return outputList
 
 
