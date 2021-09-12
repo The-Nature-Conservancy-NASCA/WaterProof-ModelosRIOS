@@ -35,6 +35,18 @@ def test_invest():
     exec_preproc.sendEmail(user_id, study_case_id, status == 'start')
     return jsonify(data)
 
+@app.route('/wf-rios/ms_classes/', methods=['GET'])
+def test_generate_ms_classes():
+    print("TEST GENERATE MAPSERVER CLASSES FOR ACTIVITY PORTFOLIO")
+    usr_folder = request.args.get('usr_folder')
+    catchment = request.args.get('catchment')
+    wi_folder = 'WI_'+catchment
+    out_directory = "%s/%s" % (usr_folder, wi_folder)
+    process_path = "/home/skaphe/Documentos/tnc/modelos/salidas/%s/" % (out_directory)
+    activity_portfolios_path = process_path + 'out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios'
+    print (activity_portfolios_path)
+    generate_ms_classes(activity_portfolios_path)
+
 
 @app.route("/wf-rios/preprocRIOS", methods=['GET'])
 def execPreproc():
@@ -143,14 +155,15 @@ def execPreproc():
         region_name = region[4]
         path_lulc = process_path + 'in/04-RIOS/LULC_%s.tif' % region_name
         print("path_lulc = %s" % path_lulc) 
+        activity_portfolios_path = process_path + 'out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios'
         parameters = {
-            'pathCobs': process_path + 'out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios',
+            'pathCobs': activity_portfolios_path,
             'nbs_id': first_nbs,
             'basin' : basin,
             'study_case_id' : id_case,
             'pathLULC': path_lulc
         }
-        data = makeGetRequest(url, parameters, 5, headers)
+        data = makeGetRequest(url, parameters, 5, headers)        
 
         #-----------------------#
         #  EJECUCION DE INVEST  #
@@ -300,9 +313,43 @@ def execPreproc():
         logger.warning("error executing::  %s", url)    
 
     exec_preproc.updateStudyCaseRunAnalisys(id_case)
+    generate_ms_classes(activity_portfolios_path)
+
     exec_preproc.sendEmail(id_usuario, id_case, False)
 
     return jsonify(result)
+
+
+def generate_ms_classes(activity_portfolios_path):
+    """
+    Generate mapserver classes for each activity portfolio
+    :return:
+    """
+    #------------------------#
+    # GENERATE MAPSERVER CLASSES FOR ACTIVITY PORTFOLIO
+    #------------------------#
+    print ("GENERATE MAPSERVER CLASSES FOR ACTIVITY PORTFOLIO")
+    classes_colors = c ["19 141 117","25 111 61","34 153 84","175 96 26","243 156 18","241 196 15","247 220 111","125 102 8","98 101 103","144 148 151","202 207 210","40 55 71","93 109 126","169 204 227"]
+    ms_class_tpl = """
+            CLASS
+                EXPRESSION "%s"
+                NAME "%s"
+                GROUP "Areas_Rios"
+                STYLE
+                    COLOR %s
+                END
+                END
+            """
+
+    json_file = open(os.path.join(activity_portfolios_path, "activity_raster_id.json"))
+    data_activity = json.load(json_file)
+    json_file.close()
+    ms_classes = ""
+    for k, v in data_activity.items():
+        ms_classes += ms_class_tpl % (v['index'], k, c[v['index']])
+    ms_classes_file = text_file(os.path.join(activity_portfolios_path, 'activity_raster_id.map'), 'w')
+    ms_classes_file.write(ms_classes)
+    ms_classes_file.close()
 
 def str2bool(v):
     return v.lower() in ("true", "True")
