@@ -316,9 +316,15 @@ def execPreproc():
         logger.warning("error executing::  %s", url)    
 
     exec_preproc.updateStudyCaseRunAnalisys(id_case)
-    generate_ms_classes(process_path + 'out')
+    try:
+        generate_ms_classes(process_path + 'out', activity_portfolios_path)
+    except:
+        logger.warning("error generate_ms_classes::  %s", activity_portfolios_path)
 
-    exec_preproc.sendEmail(id_usuario, id_case, False)
+    try:
+        exec_preproc.sendEmail(id_usuario, id_case, False)
+    except:
+        logger.warning("error sendEmail::  %s", id_case)
 
     return jsonify(result)
 
