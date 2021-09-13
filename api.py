@@ -42,10 +42,10 @@ def test_generate_ms_classes():
     catchment = request.args.get('catchment')
     wi_folder = 'WI_'+catchment
     out_directory = "%s/%s" % (usr_folder, wi_folder)
-    process_path = "/home/skaphe/Documentos/tnc/modelos/salidas/%s/" % (out_directory)
-    activity_portfolios_path = process_path + 'out/04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios'
+    process_path = "/data/outputs/%s/%s/" % (out_directory,'out')
+    activity_portfolios_path = process_path + '04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios'
     print (activity_portfolios_path)
-    generate_ms_classes(activity_portfolios_path)
+    generate_ms_classes(process_path, activity_portfolios_path)
     result = {'message': 'Generate map file', 'status': 'success'}
     return jsonify(result)
 
@@ -122,8 +122,8 @@ def execPreproc():
         for objective in studyCases_objectives:
             listObjs.append(objective[0])
 
-        process_path = "/home/skaphe/Documentos/tnc/modelos/salidas/%s/" % (
-            out_directory)
+        # process_path = "/home/skaphe/Documentos/tnc/modelos/salidas/%s/" % (out_directory)
+        process_path = "/data/outputs/%s/" % (out_directory)
         isdir = os.path.isdir(process_path)
         if(not isdir):
             os.mkdir(process_path)
@@ -315,14 +315,14 @@ def execPreproc():
         logger.warning("error executing::  %s", url)    
 
     exec_preproc.updateStudyCaseRunAnalisys(id_case)
-    generate_ms_classes(activity_portfolios_path)
+    generate_ms_classes(process_path + 'out')
 
     exec_preproc.sendEmail(id_usuario, id_case, False)
 
     return jsonify(result)
 
 
-def generate_ms_classes(activity_portfolios_path):
+def generate_ms_classes(process_path, activity_portfolios_path):
     """
     Generate mapserver classes for each activity portfolio
     :return:
@@ -332,6 +332,38 @@ def generate_ms_classes(activity_portfolios_path):
     #------------------------#
     print ("GENERATE MAPSERVER CLASSES FOR ACTIVITY PORTFOLIO")
     classes_colors = ["19 141 117","25 111 61","34 153 84","175 96 26","243 156 18","241 196 15","247 220 111","125 102 8","98 101 103","144 148 151","202 207 210","40 55 71","93 109 126","169 204 227"]
+    
+    a = 
+    ms_lry_tpl = """
+        MAP
+            NAME          'Waterproof Areas Rios'
+            CONFIG        'MS_ERRORFILE' 'stderr'
+            EXTENT        -8412553 503524 -8391124 524032
+            UNITS         meters
+            STATUS        ON
+            SIZE          5000 5000
+            RESOLUTION 91
+            DEFRESOLUTION 91
+            PROJECTION
+                'init=epsg:3857'
+            END
+            INCLUDE '../../../metadata_mapserver.map'
+            LAYER
+                NAME "Areas_Rios"
+                METADATA
+                  'ows_title' 'Areas Rios Suggested'
+                END
+                INCLUDE '../../../waterproof.projection'
+                DATA '04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios/activity_portfolio_total.tif'
+                TYPE RASTER
+                STATUS  OFF    
+                CLASSITEM "[pixel]"
+                CLASSGROUP 'Areas_Rios'    
+                %s
+            END
+        END
+        """
+    
     ms_class_tpl = """
             CLASS
                 EXPRESSION "%s"
@@ -340,18 +372,20 @@ def generate_ms_classes(activity_portfolios_path):
                 STYLE
                     COLOR %s
                 END
-                END
+            END
             """
-
+    
     json_file = open(os.path.join(activity_portfolios_path, "activity_raster_id.json"))
     data_activity = json.load(json_file)
     json_file.close()
     ms_classes = ""
     for k, v in data_activity.items():
         ms_classes += ms_class_tpl % (v['index'], k, classes_colors[v['index']])
-    ms_classes_file = open(os.path.join(activity_portfolios_path, 'activity_raster_id.map'), 'w')
-    ms_classes_file.write(ms_classes)
-    ms_classes_file.close()
+    
+    ms_lry = ms_lry_tpl % ms_classes
+    ms_lyr_file = open(os.path.join(process_path, 'areas_rios.map'), 'w')
+    ms_lyr_file.write(ms_lry)
+    ms_lyr_file.close()
 
 def str2bool(v):
     return v.lower() in ("true", "True")
