@@ -42,7 +42,8 @@ def test_generate_ms_classes():
     catchment = request.args.get('catchment')
     wi_folder = 'WI_'+catchment
     out_directory = "%s/%s" % (usr_folder, wi_folder)
-    process_path = "/data/outputs/%s/%s/" % (out_directory,'out')
+    # process_path = "/data/outputs/%s/%s/" % (out_directory,'out')
+    process_path = "/home/skaphe/Documentos/tnc/modelos/salidas/%s/%s" % (out_directory, 'out')
     activity_portfolios_path = process_path + '04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios'
     print (activity_portfolios_path)
     generate_ms_classes(process_path, activity_portfolios_path)
@@ -122,8 +123,8 @@ def execPreproc():
         for objective in studyCases_objectives:
             listObjs.append(objective[0])
 
-        # process_path = "/home/skaphe/Documentos/tnc/modelos/salidas/%s/" % (out_directory)
-        process_path = "/data/outputs/%s/" % (out_directory)
+        process_path = "/home/skaphe/Documentos/tnc/modelos/salidas/%s/" % (out_directory)
+        # process_path = "/data/outputs/%s/" % (out_directory)
         isdir = os.path.isdir(process_path)
         if(not isdir):
             os.mkdir(process_path)
