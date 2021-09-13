@@ -43,7 +43,7 @@ def test_generate_ms_classes():
     wi_folder = 'WI_'+catchment
     out_directory = "%s/%s" % (usr_folder, wi_folder)
     # process_path = "/data/outputs/%s/%s/" % (out_directory,'out')
-    process_path = "/home/skaphe/Documentos/tnc/modelos/salidas/%s/%s" % (out_directory, 'out')
+    process_path = "/home/skaphe/Documentos/tnc/modelos/salidas/%s/%s/" % (out_directory, 'out')
     activity_portfolios_path = process_path + '04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios'
     print (activity_portfolios_path)
     generate_ms_classes(process_path, activity_portfolios_path)
