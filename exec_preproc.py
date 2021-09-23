@@ -447,6 +447,7 @@ def processParameters(parametersList, basin,id_catchment, studyCase,catchment, p
 
 
 def executeFunction(basin, id_catchment, id_usuario, inputs,id_case,catchmentDir):
+    print ("init ::: executeFunction")
     today = datetime.date.today()
     # path = os.path.join("/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp",str(id_usuario) +  "_" + str(date.year) + "_" + str(date.month) + "_" + str(date.day))
     # path = os.path.join("data","wpdev","salidas",str(id_usuario) +  "_" + str(date.year) + "_" + str(date.month) + "_" + str(date.day))
@@ -521,6 +522,7 @@ def executeFunction(basin, id_catchment, id_usuario, inputs,id_case,catchmentDir
              do_gw_bf=parameters["do_gw_bf"],
              river_buffer_dist=int(parameters["river_buffer_dist"]))  # Buffer
 
+    print ("finish ::: executeFunction")
     return objectives, parameters["output_path"], catchmentOut,pcp_label
 
 # def executeFunction(basin,model,type,id_catchment,id_usuario):

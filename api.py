@@ -112,8 +112,8 @@ def execPreproc():
         catchmentDir='WI_'+catchment
         today = datetime.date.today()
         out_directory = "%s_%s_%s-%s-%s/%s" % (int(id_usuario), int(id_case), today.year, today.month, today.day,catchmentDir)
-        print(":::BASIN:::")
-        print(basin)
+        print(":::BASIN::: %s" % basin)
+        
         obj, outputPath, catchmentOut,pcp_label = exec_preproc.executeFunction(basin, catchment, id_usuario, inputs,id_case,catchmentDir)
         list_parameters = getParameters(basin, 'rios')
         print("::CATCHMENT OUT:::")
@@ -421,3 +421,4 @@ if __name__ == '__main__':
     #debugpy.listen(5678)
     ptvsd.enable_attach(address=('0.0.0.0', 5678), redirect_output=True)
     app.run(host='0.0.0.0', port=5050)
+
