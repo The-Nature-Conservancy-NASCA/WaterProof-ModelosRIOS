@@ -573,20 +573,20 @@ def executeFunction(basin, id_catchment, id_usuario, inputs,id_case,catchmentDir
 # executeFunction(44,[3],1,inputs)
 
 def analysisPeriodFromStudyCase(id):
-	logger.debug("analysisPeriodFromStudyCase - id::%s" % id)
-	conn = connect('postgresql_alfa')
-	cursor = conn.cursor()
-	sql = "select analysis_period_value from public.waterproof_study_cases_studycases where id = %s" % id
-	cursor.execute(sql)
-	year = 1
-	try:
-		row = cursor.fetchone()
-		year = row[0]
-	except:
-		year=-1
+    logger.debug("analysisPeriodFromStudyCase - id::%s" % id)
+    conn = connect('postgresql_alfa')
+    cursor = conn.cursor()
+    sql = "select analysis_period_value from public.waterproof_study_cases_studycases where id = %s" % id
+    cursor.execute(sql)
+    year = 1
+    try:
+        row = cursor.fetchone()
+        year = row[0]
+    except:
+        year=-1
 
     logger.debug("END :: analysisPeriodFromStudyCase - year::%s" % year)
-	return year
+    return year
 
 """ Function to get All Years budget from IPA Report(Rios Portfolio)"""
 """ using AdvancedHTMLParser return all the elements with className = budget_year """
