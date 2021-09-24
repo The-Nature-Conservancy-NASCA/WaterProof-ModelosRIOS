@@ -62,6 +62,10 @@ logger.setLevel(logging.DEBUG)
 
 
 def exportToShp(catchment, path):
+    logger.debug("*** init :: exportToShp ***")
+    logger.debug("catchment: %s" % catchment)
+    logger.debug("path: %s" % path)
+
     params = config(section='postgresql_alfa')
     connString = "PG: host=" + params['host'] + " dbname=" + params['database'] + \
         " user=" + params['user'] + " password=" + params['password']
@@ -130,6 +134,7 @@ def exportToShp(catchment, path):
     conn.Destroy()
     out_ds.Destroy()
 
+    logger.debug("*** FINISH :: exportToShp ***")
     return os.path.join(os.getcwd(), output)
 
 
@@ -311,6 +316,7 @@ def cutRaster(catchment, path, out_path, cut_raster_name):
 
 
 def processParameters(parametersList, basin,id_catchment, studyCase,catchment, pathF, inputs, user):
+    logger.debug("INIT :: processParameters")
     dictParameters = dict()
     out_path = ""
     in_path = ""
@@ -401,7 +407,7 @@ def processParameters(parametersList, basin,id_catchment, studyCase,catchment, p
         dictParameters[name] = value
         # print(parameter)
 
-    for parameter in parametersList:
+    # for parameter in parametersList:
         # name = parameter[0]
         # value = parameter[1]
         # if(value == 'False'):
@@ -443,7 +449,9 @@ def processParameters(parametersList, basin,id_catchment, studyCase,catchment, p
         # dictParameters[name] = value
         # print(value)
 
-        return dictParameters, out_path, catchment_out,maxMonth
+
+    logger.debug("processParameters :: end")    
+    return dictParameters, out_path, catchment_out,maxMonth
 
 
 def executeFunction(basin, id_catchment, id_usuario, inputs,id_case,catchmentDir):
@@ -485,11 +493,13 @@ def executeFunction(basin, id_catchment, id_usuario, inputs,id_case,catchmentDir
     if(not isdir):
         os.mkdir(pathCatchment)
    
-    list = getParameters(basin, 'preprocRIOS')
+    list_param_basin = getParameters(basin, 'preprocRIOS')
     path = os.path.join(path,catchmentDir)
     catchment = exportToShp(id_catchment, path)
+
+    logger.debug("executeFunction :: processParameters")
     parameters, out_path, catchmentOut,pcp_label = processParameters(
-        list, basin,id_catchment,id_case, catchment, path, inputs, id_usuario,)
+        list_param_basin, basin,id_catchment,id_case, catchment, path, inputs, id_usuario,)
 
     logger.debug("parameters :: %s", parameters)
 
@@ -563,7 +573,7 @@ def executeFunction(basin, id_catchment, id_usuario, inputs,id_case,catchmentDir
 # executeFunction(44,[3],1,inputs)
 
 def analysisPeriodFromStudyCase(id):
-	print("analysisPeriodFromStudyCase - id::%s" % id)
+	logger.debug("analysisPeriodFromStudyCase - id::%s" % id)
 	conn = connect('postgresql_alfa')
 	cursor = conn.cursor()
 	sql = "select analysis_period_value from public.waterproof_study_cases_studycases where id = %s" % id
@@ -574,6 +584,8 @@ def analysisPeriodFromStudyCase(id):
 		year = row[0]
 	except:
 		year=-1
+
+    logger.debug("END :: analysisPeriodFromStudyCase - year::%s" % year)
 	return year
 
 """ Function to get All Years budget from IPA Report(Rios Portfolio)"""
