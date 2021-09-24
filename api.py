@@ -419,6 +419,6 @@ def queryStudyCaseAnalisysResult():
 if __name__ == '__main__':
     logger.debug("start debugging port :: 5678")
     #debugpy.listen(5678)
-    ptvsd.enable_attach(address=('0.0.0.0', 5678), redirect_output=True)
+    #ptvsd.enable_attach(address=('0.0.0.0', 5678), redirect_output=True)
     app.run(host='0.0.0.0', port=5050, debug=True)
 
