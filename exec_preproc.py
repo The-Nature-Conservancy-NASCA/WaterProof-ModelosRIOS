@@ -18,6 +18,7 @@ import datetime
 import json
 import AdvancedHTMLParser 
 import smtplib, ssl
+import shutil
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from AdvancedHTMLParser import AdvancedTag
@@ -510,7 +511,19 @@ def executeFunction(basin, id_catchment, id_usuario, inputs,id_case,catchmentDir
 
     with (open(out_path + '_preprocessor_parameters.json', 'w')) as fp:
         json.dump(parameters, fp)
-    logger.debug("Pro-main :: START")
+
+    tmp_dem = '/tmp/DEM_SA_1.tif'
+    tmp_dem_out = pathPreprocIn + '/DEM_SA_1.tif'
+    tmp_dem_out_rename = pathPreprocIn + '/DEM_SA_1__.tif'
+    logger.debug("executeFunction :: tmp_dem :: %s", tmp_dem)
+    logger.debug("executeFunction :: tmp_dem_out :: %s", tmp_dem_out)
+    logger.debug("executeFunction :: tmp_dem_out_rename :: %s", tmp_dem_out_rename)
+    logger.debug("rename dem")
+    os.rename(tmp_dem_out, tmp_dem_out_rename)
+    logger.debug("executeFunction :: copy dem")
+    shutil.copyfile(tmp_dem, tmp_dem_out)
+
+    logger.debug("Pro.main :: START")
     Pro.main(working_path=parameters["working_path"],
              output_path=parameters["output_path"],
              hydro_path=parameters["hydro_path"],
@@ -539,6 +552,7 @@ def executeFunction(basin, id_catchment, id_usuario, inputs,id_case,catchmentDir
              do_gw_bf=parameters["do_gw_bf"],
              river_buffer_dist=int(parameters["river_buffer_dist"]))  # Buffer
 
+    logger.debug("Pro.main :: END")
     print ("finish ::: executeFunction")
     return objectives, parameters["output_path"], catchmentOut,pcp_label
 
