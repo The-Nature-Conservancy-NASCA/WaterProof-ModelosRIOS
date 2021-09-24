@@ -448,6 +448,12 @@ def processParameters(parametersList, basin,id_catchment, studyCase,catchment, p
 
 def executeFunction(basin, id_catchment, id_usuario, inputs,id_case,catchmentDir):
     print ("init ::: executeFunction")
+    print ("basin ::: %s" %basin)
+    print ("id_catchment ::: %s" %id_catchment)
+    print ("id_usuario ::: %s" %id_usuario)
+    print ("inputs ::: %s" %inputs)
+    print ("id_case ::: %s" %id_case)
+    print ("catchmentDir ::: %s" %catchmentDir)
     today = datetime.date.today()
     # path = os.path.join("/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp",str(id_usuario) +  "_" + str(date.year) + "_" + str(date.month) + "_" + str(date.day))
     # path = os.path.join("data","wpdev","salidas",str(id_usuario) +  "_" + str(date.year) + "_" + str(date.month) + "_" + str(date.day))
