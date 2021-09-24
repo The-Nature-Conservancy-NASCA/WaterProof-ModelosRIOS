@@ -510,6 +510,7 @@ def executeFunction(basin, id_catchment, id_usuario, inputs,id_case,catchmentDir
 
     with (open(out_path + '_preprocessor_parameters.json', 'w')) as fp:
         json.dump(parameters, fp)
+    logger.debug("Pro-main :: START")
     Pro.main(working_path=parameters["working_path"],
              output_path=parameters["output_path"],
              hydro_path=parameters["hydro_path"],

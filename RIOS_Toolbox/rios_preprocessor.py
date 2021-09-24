@@ -1676,37 +1676,37 @@ def calculate_downslope_retention_index(weight_uri_list,
     # ------------------------------------------------------------------------------------------------------------------
     ## Filling
     # ------------------------------------------------------------------------------------------------------------------
-    dataset = rasterio.open(downslope_ret_flowlen_uri)
-    band1 = dataset.read(1)
-    NoValue = dataset.nodata
-    Limits = dataset.bounds
-    SizeR = band1.shape
+    # dataset = rasterio.open(downslope_ret_flowlen_uri)
+    # band1 = dataset.read(1)
+    # NoValue = dataset.nodata
+    # Limits = dataset.bounds
+    # SizeR = band1.shape
 
     # Interpolation
-    X = np.linspace(Limits[0], Limits[2], SizeR[1])
-    Y = np.linspace(Limits[1], Limits[3], SizeR[0])
-    X, Y = np.meshgrid(X, Y)
-    z = band1[band1 != NoValue]
-    x = X[band1 != NoValue]
-    y = Y[band1 != NoValue]
-    interp = NearestNDInterpolator(list(zip(x, y)), z)
-    Z = interp(X, Y)
-    band1[band1 == NoValue] = Z[band1 == NoValue]
+    # X = np.linspace(Limits[0], Limits[2], SizeR[1])
+    # Y = np.linspace(Limits[1], Limits[3], SizeR[0])
+    # X, Y = np.meshgrid(X, Y)
+    # z = band1[band1 != NoValue]
+    # x = X[band1 != NoValue]
+    # y = Y[band1 != NoValue]
+    # interp = NearestNDInterpolator(list(zip(x, y)), z)
+    # Z = interp(X, Y)
+    # band1[band1 == NoValue] = Z[band1 == NoValue]
 
     # Save Raster
-    new_dataset = rasterio.open(downslope_ret_flowlen_uri,
-    'w', driver = 'GTiff',
-    height = dataset.height,
-    width = dataset.width,
-    count = 1,
-    dtype = band1.dtype,
-    crs = dataset.crs,
-    transform = dataset.transform)
+    # new_dataset = rasterio.open(downslope_ret_flowlen_uri,
+    # 'w', driver = 'GTiff',
+    # height = dataset.height,
+    # width = dataset.width,
+    # count = 1,
+    # dtype = band1.dtype,
+    # crs = dataset.crs,
+    # transform = dataset.transform)
 
     # Closed Rasters
-    dataset.close()
-    new_dataset.write(band1, 1)
-    new_dataset.close()
+    # dataset.close()
+    # new_dataset.write(band1, 1)
+    # new_dataset.close()
     # ------------------------------------------------------------------------------------------------------------------
 
     if not os.path.exists(downslope_ret_index_uri):
