@@ -53,6 +53,7 @@ def test_generate_ms_classes():
 
 @app.route("/wf-rios/preprocRIOS", methods=['GET'])
 def execPreproc():
+    logging.info("*** preprocRIOS :: START ***")
     id_usuario = request.args.get('id_usuario')
     id_case = request.args.get('id_case')
     studyCases_objectives = exec_preproc.getStudyCaseObjectives(id_case)
