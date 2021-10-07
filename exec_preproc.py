@@ -775,8 +775,7 @@ def sendEmail(id_user, study_case_id, start):
    
     html = message_mail('en', start)
     html = html % (user_full_name, study_case_id, study_case_name, current_time)
-    html = html.encode('utf-8')
-    logger.debug ("html : %s" % html)
+    html = html.encode('utf-8')    
     part = MIMEText(html, "html")
     message.attach(part)
 
