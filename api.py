@@ -10,6 +10,7 @@ import os
 import debugpy
 import ptvsd
 import json
+import sys
 app = Flask(__name__)
 logger = logging.getLogger(__name__)  # grabs underlying WSGI logger
 logger.setLevel(logging.DEBUG)
@@ -29,7 +30,7 @@ def test_invest():
     status = request.args.get('status')
     base_url_api = 'http://wfapp_py3:8000/wf-models/'
     r = requests.get(url=base_url_api)
-    data = r.json()    
+    data = r.json()
     
     data['user'] = user_id
     exec_preproc.sendEmail(user_id, study_case_id, status == 'start')
@@ -421,5 +422,7 @@ if __name__ == '__main__':
     logger.debug("start debugging port :: 5678")
     #debugpy.listen(5678)
     #ptvsd.enable_attach(address=('0.0.0.0', 5678), redirect_output=True)
-    app.run(host='0.0.0.0', port=5050, debug=False)
+    reload(sys)  # Reload is a hack
+    sys.setdefaultencoding('UTF8')
+    app.run(host='0.0.0.0', port=5050, debug=True)
 
