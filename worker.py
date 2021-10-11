@@ -33,6 +33,8 @@ def send_mail_task(id_usuario, id_case, start):
 def preproc_rios_task(id_usuario, id_case):
 
   logging.info("*** preprocRIOS :: START ***")
+  reload(sys)  # Reload is a hack
+  sys.setdefaultencoding('UTF8')
     
   exec_preproc.sendEmail(id_usuario, id_case, True)
 
