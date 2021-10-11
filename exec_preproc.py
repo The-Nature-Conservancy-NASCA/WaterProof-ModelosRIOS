@@ -696,15 +696,29 @@ def sendEmail(id_user, study_case_id, start):
 
 
     sql = "select email, language, first_name  || ' ' || last_name as name from people_profile pp where id = %s" % id_user
-    conn = connect('postgresql_alfa')
-    cursor = conn.cursor()
-    cursor.execute(sql)    
-    result = cursor.fetchone()
-    cursor.close()
-    
     email = 'edwin.piragauta@gmail.com'
     language = 'en'
     user_full_name = email
+    study_case_name = 'No Name Study Case'
+    result = [email, language, user_full_name]
+    try:
+        conn = connect('postgresql_alfa')
+        cursor = conn.cursor()
+        cursor.execute(sql)
+        result = cursor.fetchone()    
+        cursor.close()
+        sql = "select name from waterproof_study_cases_studycases wscs where id = %s " % study_case_id
+        cursor = conn.cursor()
+        cursor.execute(sql)
+        result_sc = cursor.fetchone()
+        study_case_name = result_sc[0]
+        study_case_name = study_case_name.encode('utf-8')        
+        cursor.close()
+        conn.close()
+    except:
+        print ("Error: unable to fecth data")
+        study_case_name = "%s :: Id: (%s)" % (study_case_name, study_case_id)
+    
     try:
         email = result[0]
         language = result[1]
@@ -712,28 +726,15 @@ def sendEmail(id_user, study_case_id, start):
         user_full_name = user_full_name.encode('utf-8')
         #logger.debug("User full name: %s" % user_full_name)
     except:
-        logger.debug("error reading info user")        
-
-    sql = "select name from waterproof_study_cases_studycases wscs where id = %s " % study_case_id
-    cursor = conn.cursor()
-    cursor.execute(sql)
-    result = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    study_case_name = 'No Name Study Case'
-    try:
-        study_case_name = result[0]
-        study_case_name = study_case_name.encode('utf-8')        
-        #logger.debug("Study case name: %s" % study_case_name)
-    except:
-        logger.debug ("error reading study_case_name")
-        study_case_name = "ID = " + study_case_id
+        logger.debug("error reading info user")               
 
     port = os.getenv('EMAIL_PORT', '465')
     smtp_server = os.getenv('EMAIL_SERVER', 'smtp.gmail.com')
     sender_email = os.getenv('EMAIL_SENDER', 'srst@skaphe.com')    
     password = os.getenv('EMAIL_PASSWORD', 'Skaphe2020*')
     receiver_email = email
+
+    logger.debug("Sending email from %s, smtp: %s, " % (sender_email, smtp_server))
         
     context = ssl.create_default_context()
         
