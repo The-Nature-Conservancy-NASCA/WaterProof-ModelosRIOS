@@ -375,7 +375,7 @@ def task_mail():
 def preproc_rios_task():
     id_usuario = request.args.get('id_usuario')
     id_case = request.args.get('id_case')
-    task = worker.preproc_rios_task.delay(id_usuario, id_case, True)
+    task = worker.preproc_rios_task.delay(id_usuario, id_case)
     task_result = AsyncResult(task.id)        
     result = validate_task_result(task_result)
     return jsonify(result)
