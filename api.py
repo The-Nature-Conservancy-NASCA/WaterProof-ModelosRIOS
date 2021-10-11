@@ -11,6 +11,9 @@ import debugpy
 import ptvsd
 import json
 import sys
+from celery.result import AsyncResult
+import worker
+
 app = Flask(__name__)
 logger = logging.getLogger(__name__)  # grabs underlying WSGI logger
 logger.setLevel(logging.DEBUG)
@@ -51,17 +54,17 @@ def test_generate_ms_classes():
     result = {'message': 'Generate map file', 'status': 'success'}
     return jsonify(result)
 
-
 @app.route("/wf-rios/preprocRIOS", methods=['GET'])
 def execPreproc():
     logging.info("*** preprocRIOS :: START ***")
     id_usuario = request.args.get('id_usuario')
     id_case = request.args.get('id_case')
-    studyCases_objectives = exec_preproc.getStudyCaseObjectives(id_case)
-    result = {'message': 'Preprocessing', 'status': 'success'}
 
     exec_preproc.sendEmail(id_usuario, id_case, True)
 
+    studyCases_objectives = exec_preproc.getStudyCaseObjectives(id_case)
+    result = {'message': 'Preprocessing', 'status': 'success'}
+    
     objectives={
         'do_erosion':True,
         'do_nutrient_p': True,
@@ -70,16 +73,12 @@ def execPreproc():
         'do_gw_bf': True
     }
     
-      #do_erosion,do_np, do_nn, do_flood,do_gw_bf,basin,catchment,id_usuario
-    # print(request.args.get('do_np'))
     do_erosion =  objectives['do_erosion']
     do_np = objectives['do_nutrient_p']
     do_nn = objectives['do_nutrient_n']
     do_flood = objectives['do_flood']
     do_gw_bf = objectives['do_gw_bf']
    
-    #basin = request.args.get('basin')
-    #catchment = str(request.args.get('catchment'))
     logging.debug('debug message')
     inputs = {"do_erosion": bool(do_erosion), "do_nutrient_p": bool(do_np), "do_nutrient_n": bool(
         do_nn), "do_flood": bool(do_flood), "do_gw_bf": bool(do_gw_bf)}
@@ -102,7 +101,7 @@ def execPreproc():
     parameters = {
         'study_case_id': id_case
     }
-    data = makeGetRequest(urlExchageRate, parameters, 5, headers)
+    data = exec_preproc.makeGetRequest(urlExchageRate, parameters, 5, headers)
     for catch in catchments:
         catchmentList.append(catch[0])
     for ptap in ptaps:
@@ -168,7 +167,7 @@ def execPreproc():
             'study_case_id' : id_case,
             'pathLULC': path_lulc
         }
-        data = makeGetRequest(url, parameters, 5, headers)        
+        data = exec_preproc.makeGetRequest(url, parameters, 5, headers)        
 
         #-----------------------#
         #  EJECUCION DE INVEST  #
@@ -186,7 +185,7 @@ def execPreproc():
         }
         logger.debug("1. Execute Invest (Current)")
         try:
-            data_exec_invest_current = makeGetRequest(url, parameters, 5, headers)
+            data_exec_invest_current = exec_preproc.makeGetRequest(url, parameters, 5, headers)
             print(data_exec_invest_current)
         except requests.exceptions.HTTPError as e:
             print (e.response.text)
@@ -196,7 +195,7 @@ def execPreproc():
         # parameters['type'] = 'currentCarbon'
 
         # try:
-        # 	data_exec_invest_current_carbon = makeGetRequest(url,parameters,5,headers)
+        # 	data_exec_invest_current_carbon = exec_preproc.makeGetRequest(url,parameters,5,headers)
         # except:
         # 	logger.warning("error executing::  %s", url)
 
@@ -205,7 +204,7 @@ def execPreproc():
         parameters['type'] = 'BaU'
         logger.debug("2. Execute Invest (BaU) ")
         try:
-            data_exec_invest_current = makeGetRequest(url, parameters, 5, headers)
+            data_exec_invest_current = exec_preproc.makeGetRequest(url, parameters, 5, headers)
         except:
             logger.warning("error executing::  %s", url)
 
@@ -215,7 +214,7 @@ def execPreproc():
         # campo analysis_period_value de study_cases
         parameters['type'] = 'NBS'
         try:
-        	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+        	data_exec_invest_current = exec_preproc.makeGetRequest(url,parameters,5,headers)
         except:
         	logger.warning("error executing::  %s", url)
 
@@ -234,7 +233,7 @@ def execPreproc():
                 'case': id_case
         }
         try:
-        	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+        	data_exec_invest_current = exec_preproc.makeGetRequest(url,parameters,5,headers)
         except:
         	logger.warning("error executing::  %s", url)     
         #-------------------------#
@@ -247,7 +246,7 @@ def execPreproc():
                 'study_case_id': id_case
         }
         try:
-        	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+        	data_exec_invest_current = exec_preproc.makeGetRequest(url,parameters,5,headers)
         except:
         	logger.warning("error executing::  %s", url)     
         #------------------#
@@ -259,7 +258,7 @@ def execPreproc():
                 'id_intake': catchment
         }
         try:
-        	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+        	data_exec_invest_current = exec_preproc.makeGetRequest(url,parameters,5,headers)
         except:
         	logger.warning("error executing::  %s", url)    
     #---------------#
@@ -274,7 +273,7 @@ def execPreproc():
                 'study_case_id': id_case
         }
         try:
-        	data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+        	data_exec_invest_current = exec_preproc.makeGetRequest(url,parameters,5,headers)
         except:
         	logger.warning("error executing::  %s", url)   
     #-----------------------------#
@@ -287,7 +286,7 @@ def execPreproc():
             'study_case_id': id_case
     }
     try:
-        data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+        data_exec_invest_current = exec_preproc.makeGetRequest(url,parameters,5,headers)
     except:
         logger.warning("error executing::  %s", url)  
     
@@ -300,7 +299,7 @@ def execPreproc():
         'study_case_id': id_case
     }
     try:
-        data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+        data_exec_invest_current = exec_preproc.makeGetRequest(url,parameters,5,headers)
     except:
         logger.warning("error executing::  %s", url)    
 
@@ -313,13 +312,13 @@ def execPreproc():
         'study_cases_id': id_case
     }
     try:
-        data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+        data_exec_invest_current = exec_preproc.makeGetRequest(url,parameters,5,headers)
     except:
         logger.warning("error executing::  %s", url)    
 
     exec_preproc.updateStudyCaseRunAnalisys(id_case)
     try:
-        generate_ms_classes(process_path + 'out', activity_portfolios_path)
+        exec_preproc.generate_ms_classes(process_path + 'out', activity_portfolios_path)
     except:
         logger.warning("error generate_ms_classes::  %s", activity_portfolios_path)
 
@@ -330,79 +329,8 @@ def execPreproc():
 
     return jsonify(result)
 
-
-def generate_ms_classes(process_path, activity_portfolios_path):
-    """
-    Generate mapserver classes for each activity portfolio
-    :return:
-    """
-    #------------------------#
-    # GENERATE MAPSERVER CLASSES FOR ACTIVITY PORTFOLIO
-    #------------------------#
-    print ("GENERATE MAPSERVER CLASSES FOR ACTIVITY PORTFOLIO")
-    classes_colors = ["19 141 117","25 111 61","34 153 84","175 96 26","243 156 18","241 196 15","247 220 111","125 102 8","98 101 103","144 148 151","202 207 210","40 55 71","93 109 126","169 204 227"]
-    
-    ms_lry_tpl = """
-        MAP
-            NAME          'Waterproof Areas Rios'
-            CONFIG        'MS_ERRORFILE' 'stderr'
-            EXTENT        -8412553 503524 -8391124 524032
-            UNITS         meters
-            STATUS        ON
-            SIZE          5000 5000
-            RESOLUTION 91
-            DEFRESOLUTION 91
-            PROJECTION
-                'init=epsg:3857'
-            END
-            INCLUDE '../../../metadata_mapserver.map'
-            LAYER
-                NAME "Areas_Rios"
-                METADATA
-                  'ows_title' 'Areas Rios Suggested'
-                END
-                INCLUDE '../../../waterproof.projection'
-                DATA '04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios/activity_portfolio_total.tif'
-                TYPE RASTER
-                STATUS  OFF    
-                CLASSITEM "[pixel]"
-                CLASSGROUP 'Areas_Rios'    
-                %s
-            END
-        END
-        """
-    
-    ms_class_tpl = """
-            CLASS
-                EXPRESSION "%s"
-                NAME "%s"
-                GROUP "Areas_Rios"
-                STYLE
-                    COLOR %s
-                END
-            END
-            """
-    
-    json_file = open(os.path.join(activity_portfolios_path, "activity_raster_id.json"))
-    data_activity = json.load(json_file)
-    json_file.close()
-    ms_classes = ""
-    for k, v in data_activity.items():
-        ms_classes += ms_class_tpl % (v['index'], k, classes_colors[v['index']])
-    
-    ms_lry = ms_lry_tpl % ms_classes
-    ms_lyr_file = open(os.path.join(process_path, 'areas_rios.map'), 'w')
-    ms_lyr_file.write(ms_lry)
-    ms_lyr_file.close()
-
 def str2bool(v):
     return v.lower() in ("true", "True")
-
-def makeGetRequest(url, parameters, timeout, headers):
-    logger.debug("URL :: %s :: Parameters :: %s", url, parameters)
-    r = requests.get(url=url, params=parameters)
-    data = r.json()
-    return data
 
 @app.route("/wf-rios/updateStudyCase", methods=['GET'])
 def updateStudyCase():
@@ -417,6 +345,44 @@ def queryStudyCaseAnalisysResult():
     result_db = exec_preproc.queryStudyCaseRunAnalisys(id_case)
     result = {'message': 'queryStudyCaseAnalisysResult', 'status': result_db}
     return jsonify(result)
+
+@app.route("/wf-rios/tasks/", methods=['GET', 'POST'])
+def get_status():
+    if request.method == 'GET':
+        task_id = request.args.get('id')
+        task_result = AsyncResult(task_id)        
+        result = validate_task_result(task_result)
+        return jsonify(result)
+    else:
+        request_data = request.get_json()
+        print (request_data)
+        task_type = request_data["type"]
+        task = worker.create_task.delay(int(task_type))
+        task_result = AsyncResult(task.id)
+        return jsonify({"task_id": task.id})        
+
+@app.route("/wf-rios/task_mail/", methods=['GET', 'POST'])
+def task_mail():
+    if request.method == 'GET':
+        id_usuario = request.args.get('id_usuario')
+        id_case = request.args.get('id_case')
+        task = worker.send_mail_task.delay(id_usuario, id_case, True)
+        task_result = AsyncResult(task.id)        
+        result = validate_task_result(task_result)
+        return jsonify(result)
+
+
+def validate_task_result(task_result):
+    result = task_result.result
+    status = task_result.status
+    if status == 'FAILURE':
+        result = 'Error'
+    resp = {
+        "task_id": task_result.id,
+        "task_status": status,
+        "task_result": result
+    }
+    return resp
 
 if __name__ == '__main__':
     logger.debug("start debugging port :: 5678")

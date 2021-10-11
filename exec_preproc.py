@@ -19,6 +19,7 @@ import json
 import AdvancedHTMLParser 
 import smtplib, ssl
 import sys
+import requests
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from AdvancedHTMLParser import AdvancedTag
@@ -60,7 +61,6 @@ objectivesDict = {
 logger = logging.getLogger('exec_preproc')
 logger.setLevel(logging.DEBUG)
 # Exportar cuenca delimitada a shp
-
 
 def exportToShp(catchment, path):
     logger.debug("*** init :: exportToShp ***")
@@ -138,7 +138,6 @@ def exportToShp(catchment, path):
     logger.debug("*** FINISH :: exportToShp ***")
     return os.path.join(os.getcwd(), output)
 
-
 def resamplingRaster(templatePath, srcPath, out):
 
     # Source
@@ -203,7 +202,6 @@ def getPtapCatchmentsByStudyCase(caseStudy):
 
 # Obtener captaciones asociadas a un caso de estudio
 
-
 def getStudyCaseCatchments(caseStudy):
     result = ''
     listResult = []
@@ -216,7 +214,6 @@ def getStudyCaseCatchments(caseStudy):
 
 # Obtener captaciones asociadas a un caso de estudio
 
-
 def getCatchmentBasin(catchment):
     result = ''
     listResult = []
@@ -228,7 +225,6 @@ def getCatchmentBasin(catchment):
         print(row[0])
         listResult.append(row[0])
     return listResult
-
 
 # Obtener NBS asociadas al caso de estudio
 
@@ -257,7 +253,6 @@ def getParameters(basin, model):
 
 # Recuperar macroregion por id
 
-
 def getRegionFromId(basin):
     result = ''
     cursor = connect('postgresql_alfa').cursor()
@@ -270,7 +265,6 @@ def getRegionFromId(basin):
 
 # Recuperar constante por macroregion
 
-
 def getConstantFromBasin(basin, constantName):
     result = ''
     cursor = connect('postgresql_alfa').cursor()
@@ -282,7 +276,6 @@ def getConstantFromBasin(basin, constantName):
     return result
 
 # Cortar raster
-
 
 def cutRaster(catchment, path, out_path, cut_raster_name):
     data = rasterio.open(path)
@@ -314,7 +307,6 @@ def cutRaster(catchment, path, out_path, cut_raster_name):
     return os.path.join(out_path, cut_raster_name)
 
 # Procesar parametros
-
 
 def processParameters(parametersList, basin,id_catchment, studyCase,catchment, pathF, inputs, user):
     logger.debug("INIT :: processParameters")
@@ -453,7 +445,6 @@ def processParameters(parametersList, basin,id_catchment, studyCase,catchment, p
 
     logger.debug("processParameters :: end")    
     return dictParameters, out_path, catchment_out,maxMonth
-
 
 def executeFunction(basin, id_catchment, id_usuario, inputs,id_case,catchmentDir):
     print ("init ::: executeFunction")
@@ -719,7 +710,7 @@ def sendEmail(id_user, study_case_id, start):
         language = result[1]
         user_full_name = result[2]
         user_full_name = user_full_name.encode('utf-8')
-        logger.debug("User full name: %s" % user_full_name)
+        #logger.debug("User full name: %s" % user_full_name)
     except:
         logger.debug("error reading info user")        
 
@@ -732,24 +723,18 @@ def sendEmail(id_user, study_case_id, start):
     study_case_name = 'No Name Study Case'
     try:
         study_case_name = result[0]
-        study_case_name = study_case_name.encode('utf-8')
-        
-        logger.debug("Study case name: %s" % study_case_name)
+        study_case_name = study_case_name.encode('utf-8')        
+        #logger.debug("Study case name: %s" % study_case_name)
     except:
         logger.debug ("error reading study_case_name")
         study_case_name = "ID = " + study_case_id
 
-    port = os.getenv('EMAIL_PORT', '587')
+    port = os.getenv('EMAIL_PORT', '465')
     smtp_server = os.getenv('EMAIL_SERVER', 'smtp.gmail.com')
     sender_email = os.getenv('EMAIL_SENDER', 'srst@skaphe.com')    
     password = os.getenv('EMAIL_PASSWORD', 'Skaphe2020*')
     receiver_email = email
-
-    # logger.debug ("Sending email to %s" % receiver_email)
-    # logger.debug ("Sender: %s" % sender_email)
-    # logger.debug ("Password: %s" % password)   
-    # logger.debug ("Server: %s" % smtp_server)
-    
+        
     context = ssl.create_default_context()
         
     to = [email]
@@ -785,9 +770,11 @@ def sendEmail(id_user, study_case_id, start):
         server.login(sender_email, password)
         server.sendmail(sender_email, receiver_email, message.as_string())
         server.close()
-        print 'Email sent!'
-    except (e):
-        print 'Something went wrong...: %s' % e
+        logger.debug ("Email sent!")
+    except Exception as e:
+        logger.debug ('Something went wrong...: %s' % e)
+
+    return "send mail to: " + user_full_name
 
 def message_mail(language, start):
 
@@ -818,3 +805,73 @@ def message_mail(language, start):
                 </body>
                 </html>
                 """
+
+def generate_ms_classes(process_path, activity_portfolios_path):
+    """
+    Generate mapserver classes for each activity portfolio
+    :return:
+    """
+    #------------------------#
+    # GENERATE MAPSERVER CLASSES FOR ACTIVITY PORTFOLIO
+    #------------------------#
+    print ("GENERATE MAPSERVER CLASSES FOR ACTIVITY PORTFOLIO")
+    classes_colors = ["19 141 117","25 111 61","34 153 84","175 96 26","243 156 18","241 196 15","247 220 111","125 102 8","98 101 103","144 148 151","202 207 210","40 55 71","93 109 126","169 204 227"]
+    
+    ms_lry_tpl = """
+        MAP
+            NAME          'Waterproof Areas Rios'
+            CONFIG        'MS_ERRORFILE' 'stderr'
+            EXTENT        -8412553 503524 -8391124 524032
+            UNITS         meters
+            STATUS        ON
+            SIZE          5000 5000
+            RESOLUTION 91
+            DEFRESOLUTION 91
+            PROJECTION
+                'init=epsg:3857'
+            END
+            INCLUDE '../../../metadata_mapserver.map'
+            LAYER
+                NAME "Areas_Rios"
+                METADATA
+                  'ows_title' 'Areas Rios Suggested'
+                END
+                INCLUDE '../../../waterproof.projection'
+                DATA '04-RIOS/1_investment_portfolio_adviser_workspace/activity_portfolios/activity_portfolio_total.tif'
+                TYPE RASTER
+                STATUS  OFF    
+                CLASSITEM "[pixel]"
+                CLASSGROUP 'Areas_Rios'    
+                %s
+            END
+        END
+        """
+    
+    ms_class_tpl = """
+            CLASS
+                EXPRESSION "%s"
+                NAME "%s"
+                GROUP "Areas_Rios"
+                STYLE
+                    COLOR %s
+                END
+            END
+            """
+    
+    json_file = open(os.path.join(activity_portfolios_path, "activity_raster_id.json"))
+    data_activity = json.load(json_file)
+    json_file.close()
+    ms_classes = ""
+    for k, v in data_activity.items():
+        ms_classes += ms_class_tpl % (v['index'], k, classes_colors[v['index']])
+    
+    ms_lry = ms_lry_tpl % ms_classes
+    ms_lyr_file = open(os.path.join(process_path, 'areas_rios.map'), 'w')
+    ms_lyr_file.write(ms_lry)
+    ms_lyr_file.close()
+
+def makeGetRequest(url, parameters, timeout, headers):
+    logger.debug("URL :: %s :: Parameters :: %s", url, parameters)
+    r = requests.get(url=url, params=parameters)
+    data = r.json()
+    return data

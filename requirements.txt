@@ -13,3 +13,5 @@ gdal==2.4.4
 scipy
 requests
 AdvancedHTMLParser
+celery==4.4.7
+redis==3.5.3
