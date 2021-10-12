@@ -5,8 +5,6 @@ rasterio
 rasterstats
 rios_preprocessor
 pymongo
-#fastapi
-#uvicorn
 dataclasses==0.1
 flask==1.0
 gdal==2.4.4
