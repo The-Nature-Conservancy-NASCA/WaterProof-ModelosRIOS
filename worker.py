@@ -1,4 +1,4 @@
-import os
+import os, sys
 import time
 import logging
 import exec_preproc
@@ -14,18 +14,20 @@ celery.conf.result_backend = os.environ.get("CELERY_RESULT_BACKEND", "redis://re
 
 @celery.task(name="create_task", queue="worker_rios")
 def create_task(task_type):
-  time.sleep(int(task_type) * 10)
-  return True
+    time.sleep(int(task_type) * 10)
+    return True
 
 @celery.task(name="send_mail_task", queue="worker_rios")
 def send_mail_task(id_usuario, id_case, start):
-  logger.debug("send_mail_task :: start")
-  user = exec_preproc.sendEmail(id_usuario, id_case, start)
-  return user  
+    logger.debug("send_mail_task :: start")
+    reload(sys)  # Reload is a hack    
+    sys.setdefaultencoding('UTF8')
+    user = exec_preproc.sendEmail(id_usuario, id_case, start)
+    return user  
 
 @celery.task(name="preproc_rios_task", queue="worker_rios")
 def preproc_rios_task(id_usuario, id_case):
-  logger.debug("preproc_rios_task :: start")
-  result = exec_preproc.preproc_rios(id_usuario, id_case)
-  return result
+    logger.debug("preproc_rios_task :: start")
+    result = exec_preproc.preproc_rios(id_usuario, id_case)
+    return result
   
