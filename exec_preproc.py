@@ -638,15 +638,13 @@ def sendEmail(id_user, study_case_id, start):
     except:
         logger.debug("error reading info user")               
 
-    port = os.getenv('EMAIL_PORT', '465')
+    port = os.getenv('EMAIL_PORT', '587')
     smtp_server = os.getenv('EMAIL_SERVER', 'smtp.gmail.com')
     sender_email = os.getenv('EMAIL_SENDER', 'srst@skaphe.com')    
     password = os.getenv('EMAIL_PASSWORD', 'Skaphe2020*')
     receiver_email = email
 
-    logger.debug("Sending email from %s, smtp: %s, " % (sender_email, smtp_server))
-        
-    context = ssl.create_default_context()
+    logger.debug("Sending email from %s, smtp: %s, " % (sender_email, smtp_server))       
         
     to = [email]
     subject = 'Waterproof Super Important Message'
@@ -676,7 +674,9 @@ def sendEmail(id_user, study_case_id, start):
     message.attach(part)
 
     try:        
-        server =  smtplib.SMTP_SSL(smtp_server, port)
+        #server =  smtplib.SMTP_SSL(smtp_server, port)
+        server = smtplib.SMTP(smtp_server, port, timeout=20)
+        server.starttls()
         server.ehlo()
         server.login(sender_email, password)
         server.sendmail(sender_email, receiver_email, message.as_string())
