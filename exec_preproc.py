@@ -743,7 +743,7 @@ def generate_ms_classes(process_path, activity_portfolios_path):
             END
             INCLUDE '../../../metadata_mapserver.map'
             LAYER
-                NAME "Areas_Rios"
+                NAME "NbS_portfolio"
                 METADATA
                   'ows_title' 'Areas Rios Suggested'
                 END
