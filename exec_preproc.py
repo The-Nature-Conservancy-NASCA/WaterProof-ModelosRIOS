@@ -24,7 +24,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from AdvancedHTMLParser import AdvancedTag
 from rasterio.mask import mask
-from execRIOS import getParameters,processParameters,execModel
+import execRIOS 
 from zonalStatistics import calculateRainfallDayMonth, calculateStatistic
 from createBioParamCsv import getColsParams, generateCsv, getDefaultBiophysicParams,getUserBiophysicParams
 
@@ -95,16 +95,6 @@ def exportToShp(catchment, path):
     out_layer.CreateField(fd)
     out_layer.CreateField(fd1)
     params = ' = ' + catchment
-    # if(len(catchment) == 1):
-    #     print("LENTCH:::")
-    #     params = ' = ' + str(catchment[0])
-    # elif(len(catchment) > 1):
-    #     params = ' IN ('
-    #     for c in catchment:
-    #         params = params + str(c) + ','
-    #     params = params[:-1] + ')'
-    #     print(":::PARAMS:::")
-    #     print(params)
 
     if (catchment != -1):
         sql = "select * from waterproof_intake_polygon where delimitation_type = 'SBN' and intake_id" + \
@@ -318,7 +308,6 @@ def processParameters(parametersList, basin,id_catchment, studyCase,catchment, p
     out_path = os.path.join(os.getcwd(), pathF, 'out', out_folder)
     in_path = os.path.join(os.getcwd(), pathF, 'in', out_folder)
     catchment_out = ""
-    logger.debug("processParameters :: start")
 
     isdir = os.path.isdir(out_path)
     if(not isdir):
@@ -439,7 +428,7 @@ def executeFunction(basin, id_catchment, id_usuario, inputs,id_case,catchmentDir
     if(not isdir):
         os.mkdir(pathCatchment)
    
-    list_param_basin = getParameters(basin, 'preprocRIOS')
+    list_param_basin = execRIOS.getParameters(basin, 'preprocRIOS')
     path = os.path.join(path,catchmentDir)
     catchment = exportToShp(id_catchment, path)
 
@@ -860,7 +849,7 @@ def preproc_rios(id_usuario, id_case):
       print(":::BASIN::: %s" % basin)
       
       obj, outputPath, catchmentOut,pcp_label = executeFunction(basin, catchment, id_usuario, inputs,id_case,catchmentDir)
-      list_parameters = getParameters(basin, 'rios')
+      list_parameters = execRIOS.getParameters(basin, 'rios')
       print("::CATCHMENT OUT:::")
       print(catchmentOut)
       listObjs = []
@@ -882,10 +871,11 @@ def preproc_rios(id_usuario, id_case):
       if(not isdir):
           os.mkdir(process_path + 'in')
       
-      parameters, out_path = processParameters(
-          nbsList,list_parameters, catchment,id_case,basin, process_path, id_usuario, listObjs, obj, outputPath, catchmentOut,pcp_label)
+      parameters, out_path = execRIOS.processParameters(nbsList,list_parameters, catchment,id_case,basin, 
+                                                    process_path, id_usuario, listObjs, obj, outputPath, 
+                                                    catchmentOut,pcp_label)
 
-      execModel(parameters)
+      execRIOS.execModel(parameters)
       with (open(process_path + 'exec_rios_parameters.json', 'w')) as fp:
           json.dump(parameters, fp)
       # Save report ipa in BD
