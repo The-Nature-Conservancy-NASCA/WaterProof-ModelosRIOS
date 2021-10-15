@@ -726,7 +726,7 @@ def generate_ms_classes(process_path, activity_portfolios_path):
     # GENERATE MAPSERVER CLASSES FOR ACTIVITY PORTFOLIO
     #------------------------#
     print ("GENERATE MAPSERVER CLASSES FOR ACTIVITY PORTFOLIO")
-    classes_colors = ["19 141 117","25 111 61","34 153 84","175 96 26","243 156 18","241 196 15","247 220 111","125 102 8","98 101 103","144 148 151","202 207 210","40 55 71","93 109 126","169 204 227"]
+    classes_colors = ["230 39 111","39 230 220","170 230 39","175 96 26","164 39 230","86 39 230","247 220 111","125 102 8","98 101 103","144 148 151","202 207 210","40 55 71","93 109 126","169 204 227"]
     
     ms_lry_tpl = """
         MAP
