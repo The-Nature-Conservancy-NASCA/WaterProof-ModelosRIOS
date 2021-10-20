@@ -18,6 +18,7 @@ import RIOS_Toolbox.rios_preprocessor as Pro
 import RIOS_Toolbox.rios as rios
 import re
 import json
+import exec_preproc
 
 logger = logging.getLogger('execRios')
 logger.setLevel(logging.DEBUG)
@@ -94,44 +95,84 @@ def exportToShpActivities(nbsList, path, user):
     feat = layer.GetNextFeature()
     n=0
     outputList=[]
-    while feat is not None:
-        output = os.path.join(path, "activity_"+feat.slug+"_shp")
-        print(output)
-        source = osr.SpatialReference()        
-        source.ImportFromEPSG(4326)
-        target = osr.SpatialReference()
-        epsg_3857 = 3857
-        epsg_54004 = 54004
-        target.ImportFromEPSG(epsg_54004)
-        transform = osr.CoordinateTransformation(source, target)
-        # Schema definition of SHP file
-        out_driver = ogr.GetDriverByName('ESRI Shapefile')
-        if os.path.exists(output):
-            out_driver.DeleteDataSource(output)
+    if feat is None:
+        sqlParam2=str(nbs[0])
+        sql2 = ("select shp.id,nbs.slug,shp.action,shp.area from waterproof_nbs_ca_waterproofnbsca nbs join waterproof_pr_default_nbs shp on shp.id=6 and nbs.id="+sqlParam2+";")
+        print(sql2)
+        layer2 = conn.ExecuteSQL(sql2)
+        feat2 = layer2.GetNextFeature()
+        while feat2 is not None:
+            output = os.path.join(path, "activity_"+feat2.slug+"_shp")
+            print(output)
+            source = osr.SpatialReference()        
+            source.ImportFromEPSG(4326)
+            target = osr.SpatialReference()
+            epsg_3857 = 3857
+            epsg_54004 = 54004
+            target.ImportFromEPSG(epsg_54004)
+            transform = osr.CoordinateTransformation(source, target)
+            # Schema definition of SHP file
+            out_driver = ogr.GetDriverByName('ESRI Shapefile')
+            if os.path.exists(output):
+                out_driver.DeleteDataSource(output)
 
-        out_ds = out_driver.CreateDataSource(output)
+            out_ds = out_driver.CreateDataSource(output)
 
-        out_layer = out_ds.CreateLayer("activities", target, ogr.wkbMultiPolygon)
-        fd_activity = ogr.FieldDefn('activity_n', ogr.OFTString)
-        fd_action = ogr.FieldDefn('action', ogr.OFTString)
-        out_layer.CreateField(fd_activity)
-        out_layer.CreateField(fd_action)
-        # print(feat)
-        featDef = ogr.Feature(out_layer.GetLayerDefn())
-        geom = feat.GetGeometryRef()
-        geom.Transform(transform)
-        featDef.SetGeometry(geom)
-        featDef.SetField('activity_n', feat.slug)
-        featDef.SetField('action', feat.action)
-        out_layer.CreateFeature(featDef)
-        feat.Destroy()
-        feat = layer.GetNextFeature()
-        outputList.append(output)
-        n=n+1
+            out_layer = out_ds.CreateLayer("activities", target, ogr.wkbMultiPolygon)
+            fd_activity = ogr.FieldDefn('activity_n', ogr.OFTString)
+            fd_action = ogr.FieldDefn('action', ogr.OFTString)
+            out_layer.CreateField(fd_activity)
+            out_layer.CreateField(fd_action)
+            # print(feat)
+            featDef = ogr.Feature(out_layer.GetLayerDefn())
+            geom = feat2.GetGeometryRef()
+            geom.Transform(transform)
+            featDef.SetGeometry(geom)
+            featDef.SetField('activity_n', feat2.slug)
+            featDef.SetField('action', feat2.action)
+            out_layer.CreateFeature(featDef)
+            feat2.Destroy()
+            feat2 = layer.GetNextFeature()
+            outputList.append(output)
+            n=n+1
+    else: 
+        while feat is not None:
+            output = os.path.join(path, "activity_"+feat.slug+"_shp")
+            print(output)
+            source = osr.SpatialReference()        
+            source.ImportFromEPSG(4326)
+            target = osr.SpatialReference()
+            epsg_3857 = 3857
+            epsg_54004 = 54004
+            target.ImportFromEPSG(epsg_54004)
+            transform = osr.CoordinateTransformation(source, target)
+            # Schema definition of SHP file
+            out_driver = ogr.GetDriverByName('ESRI Shapefile')
+            if os.path.exists(output):
+                out_driver.DeleteDataSource(output)
+
+            out_ds = out_driver.CreateDataSource(output)
+
+            out_layer = out_ds.CreateLayer("activities", target, ogr.wkbMultiPolygon)
+            fd_activity = ogr.FieldDefn('activity_n', ogr.OFTString)
+            fd_action = ogr.FieldDefn('action', ogr.OFTString)
+            out_layer.CreateField(fd_activity)
+            out_layer.CreateField(fd_action)
+            # print(feat)
+            featDef = ogr.Feature(out_layer.GetLayerDefn())
+            geom = feat.GetGeometryRef()
+            geom.Transform(transform)
+            featDef.SetGeometry(geom)
+            featDef.SetField('activity_n', feat.slug)
+            featDef.SetField('action', feat.action)
+            out_layer.CreateFeature(featDef)
+            feat.Destroy()
+            feat = layer.GetNextFeature()
+            outputList.append(output)
+            n=n+1
 
     conn.Destroy()
     out_ds.Destroy()
-
     return outputList
 
 
@@ -524,7 +565,6 @@ def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pat
                 # listAct.append(outShp)
                 #value = listAct
                 value = outShp
-#
 
             elif(riosType == 'transition_map'):
                 dictParameters[name] = {}
@@ -791,38 +831,6 @@ def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pat
 
         dictParameters[name] = value
 
-        # if(suffix):
-        #     region = getRegionFromId(basin)
-        #     label = region[4]
-        #     value = label
-        # if(constant):
-        #     constantValue = getConstantFromBasin(basin,name)
-        #     value = constantValue[2]
-        # if(empty):
-        #     value = ''
-        # if(cut):
-        #     value = cutRaster(catchment,value,in_path)
-        # if(file):
-        #     value = catchment
-        # if(outPathType):
-        #     value = out_path
-        # if(calculado):
-        #     region = getRegionFromId(basin)
-        #     label = region[4]
-        #     maxMonth,outRaster = calculateRainfallDayMonth(value,catchment,label)
-        #     value = cutRaster(catchment,outRaster,in_path)
-        # if(inputUser):
-        #     value = inputs[name]
-        # if(bio_param):
-        # 	region = getRegionFromId(basin)
-        # 	label = region[4]
-        # 	file = os.path.join(os.getcwd(),pathF,'in',"biophysical_table.csv")
-        # 	values,headers = getColsParams("apps.skaphe.com",27017,"waterProof","parametros_biofisicos",user,label,True)
-        # 	generateCsv(headers,values,file)
-        # 	value = file
-        # dictParameters[name] = value
-        # print(parameter)
-
     for parameter in parametersList:
         # name = parameter[0]
         # value = parameter[1]
@@ -903,7 +911,7 @@ def executeFunction(basin, id_catchment, id_usuario, inputs):
         os.mkdir(pathCatchment)
 
     list = getParameters(basin, 'preprocRIOS')
-    catchment = exportToShp(id_catchment, path)
+    catchment = exec_preproc.exportToShp(id_catchment, path)
     parameters, out_path = processParameters(
         list, basin, catchment, path, inputs, id_usuario)
 
@@ -962,47 +970,3 @@ def execModel(args):
     # print(args)
     rios.execute(args)
 
-
-# def executeFunction(basin,model,type,id_catchment,id_usuario):
-# 	date = datetime.date.today()
-# 	path = createFolder(id_usuario,date)
-
-# 	list = getParameters(basin,model)
-# 	catchment = exportToShp(id_catchment, path)
-# 	parameters,pathF,label = processParameters(list,basin,catchment,path,type,model)
-
-
-# 	if(model == 'awy'):
-# 		awy.execute(parameters)
-# 	elif(model == 'sdr'):
-# 		sdr.execute(parameters)
-# 	elif(model == 'carbon'):
-# 		carbon.execute(parameters)
-# 	elif(model == 'ndr'):
-# 		ndr.execute(parameters)
-# 	elif(model == 'swy'):
-# 		swy.execute(parameters)
-
-# 	return catchment,path,label
-
-
-# listP = getParameters(26,'preprocRIOS')
-# inputs = {"do_erosion":True,"do_nutrient_p":True,"do_nutrient_n":True,"do_flood":True,"do_gw_bf":True}
-# # catchment = exportToShp([6], "/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/")
-# # parameters,out_path = processParameters(listP,26,catchment,"/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/",inputs)
-# # print(out_path)
-# # print(parameters)
-# executeFunction(44,[3],1,inputs)
-
-# listP = getParameters(44,'rios')
-# # catchment = exportToShp([3], "/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/")
-# # parameters,out_path = processParameters(listP,44,catchment,"/home/skaphe/Documentos/tnc/modelos/Workspace_BasinDelineation/tmp/9_2020_10_24/",1000)
-# objectives = [2,3,4,5,6,7,8]
-# parameters,out_path = processParameters(listP,44,"/home/skaphe/Documentos/tnc/modelos/salidas/9_2020_10_24/",1000,objectives)
-# print(parameters)
-# execModel(parameters)
-
-
-# for l in listP:
-#     print(l)
-# print(listP)
