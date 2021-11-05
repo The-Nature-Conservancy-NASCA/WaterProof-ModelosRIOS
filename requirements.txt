@@ -2,7 +2,7 @@ osr
 configparser
 psycopg2
 rasterio
-rasterstats
+rasterstats==0.15.0
 rios_preprocessor
 pymongo
 dataclasses==0.1

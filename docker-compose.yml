@@ -36,6 +36,7 @@ services:
       - 5678:5678
     networks:
       - modeloswfapp_shared-models
+      - spcwaterproof_default
   
   worker:
     build: .
@@ -62,8 +63,10 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     networks:
       - modeloswfapp_shared-models
-  
+      - spcwaterproof_default  
 
 networks:
   modeloswfapp_shared-models:
+    external: true
+  spcwaterproof_default:
     external: true

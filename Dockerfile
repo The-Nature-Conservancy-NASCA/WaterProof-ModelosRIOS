@@ -7,7 +7,7 @@ ADD requirements_before.txt /app/requirements_before.txt
 ADD dev_requirements.txt /app/dev_requirements.txt
 
 RUN apt update && apt install -y libpq-dev gdal-bin libgdal-dev
-
+RUN apt install -y gfortran
 
 WORKDIR /app
 

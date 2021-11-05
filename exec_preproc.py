@@ -79,8 +79,7 @@ def exportToShp(catchment, path):
     output = os.path.join(path, "in", "catchment", "catchment.shp")
     source = osr.SpatialReference()
     source.ImportFromEPSG(4326)
-    target = osr.SpatialReference()
-    epsg_3857 = 3857
+    target = osr.SpatialReference()    
     epsg_54004 = 54004
     target.ImportFromEPSG(epsg_54004)
     transform = osr.CoordinateTransformation(source, target)
@@ -97,8 +96,7 @@ def exportToShp(catchment, path):
     params = ' = ' + catchment
 
     if (catchment != -1):
-        sql = "select * from waterproof_intake_polygon where delimitation_type = 'SBN' and intake_id" + \
-            str(params)
+        sql = "select * from waterproof_intake_polygon where delimitation_type = 'SBN' and intake_id %s " % params
         print(":::SQL:::")
         print(sql)
         # layer = conn.GetLayerByName("delineated_catchment")
@@ -106,8 +104,7 @@ def exportToShp(catchment, path):
         count = layer.GetFeatureCount()
 
         if(count == 0):
-            sql = "select * from waterproof_intake_polygon where delimitation_type = 'CATCHMENT' and intake_id" + \
-                str(params)
+            sql = "select * from waterproof_intake_polygon where delimitation_type = 'CATCHMENT' and intake_id %s" % params
             layer = conn.ExecuteSQL(sql)
 
         feat = layer.GetNextFeature()
