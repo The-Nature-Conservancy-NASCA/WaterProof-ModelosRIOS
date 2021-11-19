@@ -20,6 +20,9 @@ import AdvancedHTMLParser
 import smtplib, ssl
 import sys
 import requests
+import numpy as np
+import glob
+
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from AdvancedHTMLParser import AdvancedTag
@@ -294,6 +297,7 @@ def cutRaster(catchment, path, out_path, cut_raster_name):
 
     return os.path.join(out_path, cut_raster_name)
 
+
 # Procesar parametros
 
 def processParameters(parametersList, basin,id_catchment, studyCase,catchment, pathF, inputs, user):
@@ -387,6 +391,8 @@ def processParameters(parametersList, basin,id_catchment, studyCase,catchment, p
         dictParameters[name] = value
         # print(parameter)
     
+    correct_stream(in_path)
+
     logger.debug("processParameters :: end")    
     return dictParameters, out_path, catchment_out,maxMonth
 
@@ -1059,3 +1065,46 @@ def preproc_rios(id_usuario, id_case):
       logger.warning("error sendEmail::  %s", id_case)
 
   return result
+
+
+def correct_stream(path_prerios):
+    print('correct_stream, path: %s' % path_prerios)
+    NameDEM     = glob.glob(os.path.join(path_prerios,'DEM*'))
+    NameStream  = glob.glob(os.path.join(path_prerios,'Stream*'))
+
+    # Read Raster - Base
+    Tmp     = rasterio.open(NameDEM[0])
+    Tmp1    = rasterio.open(NameStream[0])
+    DEM     = Tmp.read(1)
+    NoDataDEM = Tmp.nodata
+
+    Stream  = Tmp1.read(1)
+    NoDataStream = Tmp1.nodata
+
+    # Check
+    if np.sum(Stream[Stream != NoDataStream]) == 0:
+        Posi = DEM == np.min(DEM[DEM != NoDataDEM])
+        Stream[Posi] = 1
+
+        Tmp.close()
+        Tmp1.close()
+
+        height = Tmp1.shape[0]
+        width  = Tmp1.shape[1]
+        dtype  = Stream.dtype
+        crs    = Tmp1.crs
+        transform = Tmp1.transform
+
+        # Lectura
+        with rasterio.open(
+            NameStream[0],'w',
+            driver='GTiff',
+            height=height,
+            width=width,
+            count=1,
+            dtype=dtype,
+            crs=crs,
+            transform=transform,
+            nodata=NoDataStream
+        ) as dst:
+            dst.write(Stream, 1)
