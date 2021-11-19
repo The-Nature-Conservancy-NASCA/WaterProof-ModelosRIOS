@@ -831,6 +831,48 @@ def processParameters(nbsList, parametersList, id_catchment, id_case, basin, pat
 
         dictParameters[name] = value
 
+    for parameter in parametersList:
+        # name = parameter[0]
+        # value = parameter[1]
+        # if(value == 'False'):
+        #     value = False
+        # elif(value == 'True'):
+        #     value = True
+        # cut = parameter[2]
+        # constant = parameter[3]
+        # suffix = parameter[4]
+        # empty = parameter[5]
+        # file = parameter[6]
+        # folder = parameter[7]
+        # outPathType = parameter[8]
+        # calculado = parameter[11]
+        # inputUser = parameter[12]
+        # if(suffix):
+        #     region = getRegionFromId(basin)
+        #     label = region[4]
+        #     value = label
+        # if(constant):
+        #     constantValue = getConstantFromBasin(basin,name)
+        #     value = constantValue[2]
+        # if(empty):
+        #     value = ''
+        # if(cut):
+        #     value = cutRaster(catchment,value,in_path)
+        # if(file):
+        #     value = catchment
+        # if(outPathType):
+        #     value = out_path
+        # # if(calculado):
+        #     # region = getRegionFromId(basin)
+        #     # label = region[4]
+        #     # maxMonth,outRaster = calculateRainfallDayMonth(value,catchment,label)
+        #     # value = cutRaster(catchment,outRaster,in_path)
+        # # if(inputUser):
+        # #     value = inputs[name]
+
+        # dictParameters[name] = value
+        # print(value)
+
         return dictParameters, out_path
 
 
@@ -870,7 +912,8 @@ def executeFunction(basin, id_catchment, id_usuario, inputs):
 
     list = getParameters(basin, 'preprocRIOS')
     catchment = exec_preproc.exportToShp(id_catchment, path)
-    parameters, out_path = processParameters(list, basin, catchment, path, inputs, id_usuario)
+    parameters, out_path = processParameters(
+        list, basin, catchment, path, inputs, id_usuario)
 
     #print(parameters)
     print ("save file :: %s%s" % (out_path,"parameters_rios.json"))
