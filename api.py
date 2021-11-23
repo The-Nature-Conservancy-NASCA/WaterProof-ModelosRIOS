@@ -104,6 +104,7 @@ def task_mail():
 
 @app.route("/wf-rios/preproc_rios_task/", methods=['GET'])
 def preproc_rios_task():
+    logger.debug("*** preproc_rios_task :: START ***")
     id_usuario = request.args.get('id_usuario')
     id_case = request.args.get('id_case')
     task = worker.preproc_rios_task.delay(id_usuario, id_case)
