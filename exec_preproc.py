@@ -606,7 +606,7 @@ def queryStudyCaseRunAnalisys(id):
     return result
 
 def sendEmail(id_user, study_case_id, start):
-
+    logger.debug("START :: sendEmail")
 
     sql = "select email, language, first_name  || ' ' || last_name as name from people_profile pp where id = %s" % id_user
     email = 'edwin.piragauta@gmail.com'

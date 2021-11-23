@@ -7,7 +7,7 @@ from celery import Celery
 logger = logging.getLogger(__name__) # grabs underlying WSGI logger
 logger.setLevel(logging.DEBUG)
 
-celery = Celery(__name__)
+celery = Celery('worker_rios')
 celery.conf.broker_url = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379")
 celery.conf.result_backend = os.environ.get("CELERY_RESULT_BACKEND", "redis://redis:6379")
 
