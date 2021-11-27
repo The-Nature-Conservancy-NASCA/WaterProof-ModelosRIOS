@@ -702,7 +702,7 @@ def message_mail(language, start):
                     <p>Once the process is finished, we will be sending you an email informing you to review the results.</p>
                     <p>Execution Start Date:% s</p>
                     <p>Regards,</p>
-                    <p>TNC team</p>
+                    <p>Waterproof team</p>
                 </body>
                 </html>
                 """
@@ -715,7 +715,7 @@ def message_mail(language, start):
                     <p>Your execution process identified with Id: %s for the Case Study: %s has finished.</p>
                     <p>Finished Date:% s</p>
                     <p>Regards,</p>
-                    <p>TNC team</p>
+                    <p>Waterproof team</p>
                 </body>
                 </html>
                 """
