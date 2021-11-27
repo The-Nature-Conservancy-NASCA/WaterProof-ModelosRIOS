@@ -712,7 +712,7 @@ def message_mail(language, start):
                 <body>
                     <p>Dear User %s,</p>
                     
-                    <p>You execution process identified with Id: %s for the Case Study: %s has finished.</p>
+                    <p>Your execution process identified with Id: %s for the Case Study: %s has finished.</p>
                     <p>Finished Date:% s</p>
                     <p>Regards,</p>
                     <p>TNC team</p>
