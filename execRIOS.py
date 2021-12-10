@@ -911,7 +911,7 @@ def executeFunction(basin, id_catchment, id_usuario, inputs):
         os.mkdir(pathCatchment)
 
     list = getParameters(basin, 'preprocRIOS')
-    catchment = exec_preproc.exportToShp(id_catchment, path)
+    catchment = exec_preproc.exportToShp(id_catchment, path, False)
     parameters, out_path = processParameters(
         list, basin, catchment, path, inputs, id_usuario)
 

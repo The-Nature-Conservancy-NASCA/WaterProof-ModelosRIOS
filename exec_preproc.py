@@ -66,18 +66,24 @@ logger = logging.getLogger('exec_preproc')
 logger.setLevel(logging.DEBUG)
 # Exportar cuenca delimitada a shp
 
-def exportToShp(catchment, path):
+def exportToShp(catchment, path, use_geom_json_field):
     logger.debug("*** init :: exportToShp ***")
     logger.debug("catchment: %s" % catchment)
     logger.debug("path: %s" % path)
+    logger.debug("use_geom_json_field: %s" % use_geom_json_field)
 
     params = config(section='postgresql_alfa')
     connString = "PG: host=" + params['host'] + " dbname=" + params['database'] + \
         " user=" + params['user'] + " password=" + params['password']
-    conn = ogr.Open(connString)
-    if conn is None:
-        print('Could not open a database or GDAL is not correctly installed!')
-        sys.exit(1)
+
+    if use_geom_json_field == False:
+        conn = ogr.Open(connString)
+        if conn is None:
+            print('Could not open a database or GDAL is not correctly installed!')
+            sys.exit(1)
+    else:
+        conn = connect('postgresql_alfa')
+        cursor = conn.cursor()
 
     output = os.path.join(path, "in", "catchment", "catchment.shp")
     source = osr.SpatialReference()
@@ -99,32 +105,44 @@ def exportToShp(catchment, path):
     params = ' = ' + catchment
 
     if (catchment != -1):
-        sql = "select * from waterproof_intake_polygon where delimitation_type = 'SBN' and intake_id %s " % params
-        print(":::SQL:::")
-        print(sql)
-        # layer = conn.GetLayerByName("delineated_catchment")
-        layer = conn.ExecuteSQL(sql)
-        count = layer.GetFeatureCount()
+        
+        if use_geom_json_field == False:
+            sql = "select * from waterproof_intake_polygon where delimitation_type in ('SBN','CATCHMENT') and intake_id %s " % params
+            print(":::SQL::: %s" % sql)
+            layer = conn.ExecuteSQL(sql)        
 
-        if(count == 0):
-            sql = "select * from waterproof_intake_polygon where delimitation_type = 'CATCHMENT' and intake_id %s" % params
-            layer = conn.ExecuteSQL(sql)
-
-        feat = layer.GetNextFeature()
-
-        while feat is not None:
-            featDef = ogr.Feature(out_layer.GetLayerDefn())
-            geom = feat.GetGeometryRef()
-            geom.Transform(transform)
-            featDef.SetGeometry(geom)
-            featDef.SetField('ws_id', feat.id)
-            featDef.SetField('subws_id', feat.id)
-            out_layer.CreateFeature(featDef)
-            feat.Destroy()
             feat = layer.GetNextFeature()
-
-    conn.Destroy()
-    out_ds.Destroy()
+            while feat is not None:
+                featDef = ogr.Feature(out_layer.GetLayerDefn())
+                geom = feat.GetGeometryRef()
+                geom.Transform(transform)
+                featDef.SetGeometry(geom)
+                featDef.SetField('ws_id', feat.id)
+                featDef.SetField('subws_id', feat.id)
+                out_layer.CreateFeature(featDef)
+                feat.Destroy()
+                feat = layer.GetNextFeature()
+            conn.Destroy()
+            out_ds.Destroy()
+        else:
+            sql = 'select id, "geomIntake" from waterproof_intake_polygon intake_id %s ' % params
+            print(":::SQL::: %s" % sql)
+            cursor.execute(sql)
+            try:
+                row = cursor.fetchone()
+                feat_coll = row[1] # data as json
+                id = row[0]
+                geom_intake = json.loads(feat_coll)['features'][0]['geometry']
+                geom = ogr.CreateGeometryFromJson(json.dumps(geom_intake))
+                featDef = ogr.Feature(out_layer.GetLayerDefn())
+                geom.Transform(transform)		
+                featDef.SetGeometry(geom)			
+                featDef.SetField('ws_id',id)		
+                featDef.SetField('subws_id',id)		
+                out_layer.CreateFeature(featDef)                
+            except:
+                print ("No data found")
+            out_ds.Destroy()
 
     logger.debug("*** FINISH :: exportToShp ***")
     return os.path.join(os.getcwd(), output)
@@ -397,13 +415,6 @@ def processParameters(parametersList, basin,id_catchment, studyCase,catchment, p
     return dictParameters, out_path, catchment_out,maxMonth
 
 def executeFunction(basin, id_catchment, id_usuario, inputs,id_case,catchmentDir):
-    print ("init ::: executeFunction")
-    print ("basin ::: %s" %basin)
-    print ("id_catchment ::: %s" %id_catchment)
-    print ("id_usuario ::: %s" %id_usuario)
-    print ("inputs ::: %s" %inputs)
-    print ("id_case ::: %s" %id_case)
-    print ("catchmentDir ::: %s" %catchmentDir)
     today = datetime.date.today()
     path = os.path.join(ruta, "salidas", "%s_%s_%s-%s-%s" % (int(id_usuario), int(id_case), today.year, today.month, today.day))
     pathPreprocIn = os.path.join(path,catchmentDir, "in", "02-PREPROC_RIOS")
@@ -433,7 +444,7 @@ def executeFunction(basin, id_catchment, id_usuario, inputs,id_case,catchmentDir
    
     list_param_basin = execRIOS.getParameters(basin, 'preprocRIOS')
     path = os.path.join(path,catchmentDir)
-    catchment = exportToShp(id_catchment, path)
+    catchment = exportToShp(id_catchment, path, False)
 
     logger.debug("executeFunction :: processParameters")
     parameters, out_path, catchmentOut,pcp_label = processParameters(
@@ -883,6 +894,12 @@ def preproc_rios(id_usuario, id_case):
           json.dump(parameters, fp)
       # Save report ipa in BD
       parse_to_get_ipa_report(out_path,catchment,id_case,id_usuario)
+      
+      #*************************#
+      exportToShp(catchment, catchmentOut, True)  
+      
+      #*************************#
+
       headers = {
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36',
       }
