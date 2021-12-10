@@ -76,6 +76,7 @@ def exportToShp(catchment, path, use_geom_json_field):
     connString = "PG: host=" + params['host'] + " dbname=" + params['database'] + \
         " user=" + params['user'] + " password=" + params['password']
 
+    output = os.path.join(path, "in", "catchment", "catchment.shp")
     if use_geom_json_field == False:
         conn = ogr.Open(connString)
         if conn is None:
@@ -84,8 +85,8 @@ def exportToShp(catchment, path, use_geom_json_field):
     else:
         conn = connect('postgresql_alfa')
         cursor = conn.cursor()
-
-    output = os.path.join(path, "in", "catchment", "catchment.shp")
+        output = path
+    
     source = osr.SpatialReference()
     source.ImportFromEPSG(4326)
     target = osr.SpatialReference()    
