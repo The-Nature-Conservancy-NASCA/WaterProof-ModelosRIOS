@@ -85,7 +85,7 @@ def exportToShp(catchment, path, use_geom_json_field):
     else:
         conn = connect('postgresql_alfa')
         cursor = conn.cursor()
-        output = path
+        output = path.replace(".shp", "_using_json.shp")
     
     source = osr.SpatialReference()
     source.ImportFromEPSG(4326)
