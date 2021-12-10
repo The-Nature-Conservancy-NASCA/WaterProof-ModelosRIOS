@@ -126,7 +126,7 @@ def exportToShp(catchment, path, use_geom_json_field):
             conn.Destroy()
             out_ds.Destroy()
         else:
-            sql = 'select id, "geomIntake" from waterproof_intake_polygon intake_id %s ' % params
+            sql = 'select id, "geomIntake" from waterproof_intake_polygon where intake_id %s ' % params
             print(":::SQL::: %s" % sql)
             cursor.execute(sql)
             try:
