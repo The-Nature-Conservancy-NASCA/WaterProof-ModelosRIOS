@@ -920,7 +920,8 @@ def preproc_rios(id_usuario, id_case):
           'nbs_id': first_nbs,
           'basin' : basin,
           'study_case_id' : id_case,
-          'pathLULC': path_lulc
+          'pathLULC': path_lulc,
+          'catchmentOut': catchmentOut
       }
       data = makeGetRequest(url, parameters, 5, headers)        
 
