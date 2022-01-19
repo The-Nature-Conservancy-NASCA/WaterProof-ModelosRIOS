@@ -1239,7 +1239,7 @@ def generate_ms_main_file(process_path):
                                 min_carbon = stats[0]['min']
                                 max_carbon = stats[0]['max']
 
-        mapfile = ms_templates.format(min_awy,max_awy,min_swy,max_swy,min_sdr,max_sdr,min_ndrn,max_ndrn,min_ndrp,max_ndrp,min_carbon,max_carbon)
+        mapfile = ms_templates.mapserver_template_file.format(min_awy,max_awy,min_swy,max_swy,min_sdr,max_sdr,min_ndrn,max_ndrn,min_ndrp,max_ndrp,min_carbon,max_carbon)
 
         f = open(os.path.join(process_path, "mapserver.map"),"w+")
         f.write(mapfile)
