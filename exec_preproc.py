@@ -22,12 +22,14 @@ import sys
 import requests
 import numpy as np
 import glob
+import ms_templates.templates as ms_templates
+import execRIOS 
 
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from AdvancedHTMLParser import AdvancedTag
-from rasterio.mask import mask
-import execRIOS 
+from rasterio.mask import mask, zonal_stats
+
 from zonalStatistics import calculateRainfallDayMonth, calculateStatistic
 from createBioParamCsv import getColsParams, generateCsv, getDefaultBiophysicParams,getUserBiophysicParams
 
@@ -297,7 +299,6 @@ def cutRaster(catchment, path, out_path, cut_raster_name):
         if 'Stream' in path or 'Soil_Depth' in path or 'int' in src.dtypes[0]:
             nd = 255
         
-
         out_image, out_transform = mask(src, shapes, crop=True, nodata=nd)
         out_meta = src.meta
 
@@ -976,7 +977,7 @@ def preproc_rios(id_usuario, id_case):
 
       # ''' Ejecutar Carbon para NBS'''
 
-      # # TODO :: Evaluar si se puede optimizar execInvest adicionando los llamador a 'Carbon' directamente en current, BaU y NBS
+      # # TODO :: Evaluar si se puede optimizar execInvest adicionando los llamados a 'Carbon' directamente en current, BaU y NBS
 
       #-------------------------#
       # EJECUCION DESAGREGACION
@@ -1068,15 +1069,20 @@ def preproc_rios(id_usuario, id_case):
       'study_cases_id': id_case
   }
   try:
-      data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
+    data_exec_invest_current = makeGetRequest(url,parameters,5,headers)
   except:
-      logger.warning("error executing::  %s", url)    
+    logger.warning("error executing::  %s", url)    
 
   updateStudyCaseRunAnalisys(id_case)
   try:
-      generate_ms_classes(process_path + 'out', activity_portfolios_path)
+    generate_ms_classes(process_path + 'out', activity_portfolios_path)
   except:
-      logger.warning("error generate_ms_classes::  %s", activity_portfolios_path)
+    logger.warning("error generate_ms_classes::  %s", activity_portfolios_path)
+
+  try:
+      generate_ms_main_file(process_path )
+  except:
+      logger.warning("error generate_ms_main_file::  %s", process_path)
 
   try:
       sendEmail(id_usuario, id_case, False)
@@ -1127,3 +1133,114 @@ def correct_stream(path_prerios):
             nodata=NoDataStream
         ) as dst:
             dst.write(Stream, 1)
+
+def generate_ms_main_file(process_path):
+    AWY_DIR = "output/per_pixel"
+    type_stats=['min','max']
+    catchment_relative_path = "in/catchment/catchment.shp"
+
+    shp_file = os.path.join(process_path, catchment_relative_path)
+    invest_dir = os.path.join(process_path, "out/03-INVEST")
+    if (os.path.exists(invest_dir)):
+        awy_dir = os.path.join(invest_dir, "AWY")
+        swy_dir = os.path.join(invest_dir, "SWY")
+        sdr_dir = os.path.join(invest_dir, "SDR")
+        ndr_dir = os.path.join(invest_dir, "NDR")
+        carbon_dir = os.path.join(invest_dir, "CARBON")
+        min_swy = -1
+        max_swy = 1
+        min_awy = -1
+        max_awy = 1
+        min_sdr = -1
+        max_sdr = 1
+        min_ndrn = -1
+        max_ndrn = 1
+        min_ndrp = -1
+        max_ndrp = 1
+        min_carbon = -1
+        max_carbon = 1
+
+        if (os.path.exists(awy_dir)):
+            print("AWY directory found: %s" % awy_dir)
+            for year_dir in os.listdir(awy_dir):
+                print("Year directory found: %s" % year_dir)
+                if os.path.isdir(os.path.join(awy_dir, year_dir)):
+                    full_path_awy = os.path.join(awy_dir, year_dir, AWY_DIR)
+                    if (os.path.exists(full_path_awy)):
+                        for awy_file in os.listdir(full_path_awy):
+                            if awy_file.startswith("wyield_"):
+                                awy_raster_file = os.path.join(full_path_awy, awy_file)
+                                stats = zonal_stats(shp_file,awy_raster_file,stats=type_stats)
+                                print(stats)
+                                min_awy = stats[0]['min']
+                                max_awy = stats[0]['max']
+        if (os.path.exists(swy_dir)):
+            print("SWY directory found: %s" % swy_dir)
+            for year_dir in os.listdir(swy_dir):
+                print("Year directory found: %s" % year_dir)
+                if os.path.isdir(os.path.join(swy_dir, year_dir)):
+                    full_path_swy = os.path.join(swy_dir, year_dir)
+                    if (os.path.exists(full_path_swy)):
+                        for swy_file in os.listdir(full_path_swy):
+                            if swy_file.startswith("B_") and swy_file.endswith(".tif"):
+                                swy_raster_file = os.path.join(full_path_swy, swy_file)
+                                stats = zonal_stats(shp_file,swy_raster_file,stats=type_stats)
+                                print(stats)
+                                min_swy = stats[0]['min']
+                                max_swy = stats[0]['max']
+        if (os.path.exists(sdr_dir)):
+            print("SDR directory found: %s" % sdr_dir)
+            for year_dir in os.listdir(sdr_dir):
+                print("Year directory found: %s" % year_dir)
+                if os.path.isdir(os.path.join(sdr_dir, year_dir)):
+                    full_path_sdr = os.path.join(sdr_dir, year_dir)
+                    if (os.path.exists(full_path_sdr)):
+                        for sdr_file in os.listdir(full_path_sdr):
+                            if sdr_file.startswith("B_"):
+                                sdr_raster_file = os.path.join(full_path_sdr, sdr_file)
+                                stats = zonal_stats(shp_file,sdr_raster_file,stats=type_stats)
+                                print(stats)
+                                min_sdr = stats[0]['min']
+                                max_sdr = stats[0]['max']
+        if (os.path.exists(ndr_dir)):
+            print("NDR directory found: %s" % ndr_dir)
+            for year_dir in os.listdir(ndr_dir):
+                print("Year directory found: %s" % year_dir)
+                if os.path.isdir(os.path.join(ndr_dir, year_dir)):
+                    full_path_ndr = os.path.join(ndr_dir, year_dir)
+                    if (os.path.exists(full_path_ndr)):
+                        for ndr_file in os.listdir(full_path_ndr):
+                            if ndr_file.startswith("n_export_"):
+                                ndr_raster_file = os.path.join(full_path_ndr, ndr_file)
+                                stats = zonal_stats(shp_file,ndr_raster_file,stats=type_stats)
+                                print ("NDR N")
+                                print(stats)
+                                min_ndrn = stats[0]['min']
+                                max_ndrn = stats[0]['max']
+                            elif ndr_file.startswith("p_export_"):
+                                ndr_raster_file = os.path.join(full_path_ndr, ndr_file)
+                                stats = zonal_stats(shp_file,ndr_raster_file,stats=type_stats)
+                                print ("NDR P")
+                                print(stats)
+                                min_ndrp = stats[0]['min']
+                                max_ndrp = stats[0]['max']
+        if (os.path.exists(carbon_dir)):
+            print("CARBON directory found: %s" % carbon_dir)
+            for year_dir in os.listdir(carbon_dir):
+                print("Year directory found: %s" % year_dir)
+                if os.path.isdir(os.path.join(carbon_dir, year_dir)):
+                    full_path_carbon = os.path.join(carbon_dir, year_dir)
+                    if (os.path.exists(full_path_carbon)):
+                        for carbon_file in os.listdir(full_path_carbon):
+                            if carbon_file.startswith("tot_c_cur_"):
+                                carbon_raster_file = os.path.join(full_path_carbon, carbon_file)
+                                stats = zonal_stats(shp_file,carbon_raster_file,stats=type_stats)
+                                print(stats)
+                                min_carbon = stats[0]['min']
+                                max_carbon = stats[0]['max']
+
+        mapfile = ms_templates.format(min_awy,max_awy,min_swy,max_swy,min_sdr,max_sdr,min_ndrn,max_ndrn,min_ndrp,max_ndrp,min_carbon,max_carbon)
+
+        f = open(os.path.join(process_path, "mapserver.map"),"w+")
+        f.write(mapfile)
+        f.close()
