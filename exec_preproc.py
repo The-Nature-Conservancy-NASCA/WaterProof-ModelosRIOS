@@ -28,7 +28,8 @@ import execRIOS
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from AdvancedHTMLParser import AdvancedTag
-from rasterio.mask import mask, zonal_stats
+from rasterio.mask import mask
+from rasterstats import zonal_stats
 
 from zonalStatistics import calculateRainfallDayMonth, calculateStatistic
 from createBioParamCsv import getColsParams, generateCsv, getDefaultBiophysicParams,getUserBiophysicParams
