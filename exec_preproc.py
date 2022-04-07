@@ -752,7 +752,7 @@ def generate_ms_classes(process_path, activity_portfolios_path):
             EXTENT        -8412553 503524 -8391124 524032
             UNITS         meters
             STATUS        ON
-            SIZE          5000 5000
+            SIZE          500 500
             RESOLUTION 91
             DEFRESOLUTION 91
             PROJECTION
