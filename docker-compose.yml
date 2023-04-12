@@ -1,0 +1,72 @@
+version: '3'
+
+services:
+  wfapp_py2:
+    image: wfapp_py2
+    container_name: wfapp_py2_container
+    build: .
+    # restart: always
+    environment:
+      - PG_HOST=${PG_HOST}
+      - PG_GEO_DATABASE=${PG_GEO_DATABASE}
+      - PG_GEO_USER=${PG_GEO_USER}
+      - PG_GEO_PASSWORD=${PG_GEO_PASSWORD}
+      - PG_DATABASE=${PG_DATABASE}
+      - PG_USER=${PG_USER}
+      - PG_PASSWORD=${PG_PASSWORD}
+      - PG_PORT=${PG_PORT}
+      - PATH_FILES=${PATH_FILES} 
+      - EMAIL_SERVER=${EMAIL_SERVER} 
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_SENDER=${EMAIL_SENDER}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./:/app/
+      - /data/global_datasets/:/home/skaphe/Documentos/tnc/modelos/entradas/
+      - /data/outputs/:/home/skaphe/Documentos/tnc/modelos/salidas/
+      # - /home/skaphe/Documentos/tnc/modelos/entradas/:/home/skaphe/Documentos/tnc/modelos/entradas/
+      # - /home/skaphe/Documentos/tnc/modelos/salidas/:/home/skaphe/Documentos/tnc/modelos/salidas/
+      # - F:/PROYECTOS/TNC/WFAPP/modelos/entradas/:/home/skaphe/Documentos/tnc/modelos/entradas/
+      # - F:/PROYECTOS/TNC/WFAPP/modelos/salidas/:/home/skaphe/Documentos/tnc/modelos/salidas/      
+      # - .:/app
+    ports:
+      - 5050:5050
+      - 5678:5678
+    networks:
+      - modeloswfapp_shared-models
+      - spcwaterproof_default
+  
+  worker:
+    build: .
+    command: celery worker --app=worker.celery --loglevel=info -n worker_rios@%h -Q worker_rios
+    volumes:
+      - ./:/app/
+      - /data/global_datasets/:/home/skaphe/Documentos/tnc/modelos/entradas/
+      - /data/outputs/:/home/skaphe/Documentos/tnc/modelos/salidas/
+    environment:
+      - PG_HOST=${PG_HOST}
+      - PG_GEO_DATABASE=${PG_GEO_DATABASE}
+      - PG_GEO_USER=${PG_GEO_USER}
+      - PG_GEO_PASSWORD=${PG_GEO_PASSWORD}
+      - PG_DATABASE=${PG_DATABASE}
+      - PG_USER=${PG_USER}
+      - PG_PASSWORD=${PG_PASSWORD}
+      - PG_PORT=${PG_PORT}
+      - PATH_FILES=${PATH_FILES}
+      - EMAIL_SERVER=${EMAIL_SERVER} 
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_SENDER=${EMAIL_SENDER}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    networks:
+      - modeloswfapp_shared-models
+      - spcwaterproof_default  
+
+networks:
+  modeloswfapp_shared-models:
+    external: true
+  spcwaterproof_default:
+    external: true

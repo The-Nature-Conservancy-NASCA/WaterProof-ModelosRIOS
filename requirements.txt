@@ -1,0 +1,15 @@
+osr
+configparser
+psycopg2
+rasterio
+rasterstats==0.15.0
+rios_preprocessor
+pymongo
+dataclasses==0.1
+flask==1.0
+gdal==2.4.4
+scipy
+requests
+AdvancedHTMLParser
+celery==4.4.7
+redis==3.5.3
